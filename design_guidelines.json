@@ -1,0 +1,156 @@
+{
+  "project_name": "Revma Heavy Equipment Hire",
+  "design_philosophy": {
+    "theme": "Industrial Tactical (Light Mode)",
+    "core_concept": "Reliability meets Speed. The UI should feel like a well-maintained power tool: robust, high-contrast, and safe.",
+    "emotional_tone": "Professional, Efficient, Safe, Robust",
+    "visual_enhancers": [
+      "Subtle Hazard Stripes (in progress bars or active states)",
+      "45-degree cuts on container corners (Tactical feel)",
+      "Blueprint grid background for Admin Dashboard",
+      "High-vis borders for active inputs"
+    ]
+  },
+  "typography": {
+    "headings": {
+      "family": "Barlow Condensed",
+      "weights": ["600", "700", "800"],
+      "letter_spacing": "tracking-tight",
+      "usage": "All section headers, machine names, and key metrics. Uppercase for H1/H2."
+    },
+    "body": {
+      "family": "Public Sans",
+      "weights": ["400", "500", "600"],
+      "letter_spacing": "tracking-normal",
+      "usage": "Forms, agreements, checklists, standard text."
+    },
+    "mono": {
+      "family": "JetBrains Mono",
+      "usage": "Asset IDs, License Numbers, Date/Time stamps."
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "DEFAULT": "#0056D2",
+        "foreground": "#FFFFFF",
+        "description": "Revma High-Voltage Blue. Use for primary actions, header backgrounds, active states."
+      },
+      "secondary": {
+        "DEFAULT": "#FF6B00",
+        "foreground": "#FFFFFF",
+        "description": "Safety Orange. Use for 'Rent Now', 'Sign Here', Warnings, and High-Priority CTAs."
+      },
+      "accent": {
+        "DEFAULT": "#F0F4F8",
+        "foreground": "#0F172A",
+        "description": "Industrial Grey/White. Backgrounds for cards."
+      },
+      "neutral": {
+        "50": "#F8FAFC",
+        "100": "#F1F5F9",
+        "200": "#E2E8F0",
+        "300": "#CBD5E1",
+        "400": "#94A3B8",
+        "500": "#64748B",
+        "600": "#475569",
+        "700": "#334155",
+        "800": "#1E293B",
+        "900": "#0F172A",
+        "950": "#020617"
+      },
+      "success": {
+        "DEFAULT": "#10B981",
+        "foreground": "#FFFFFF"
+      },
+      "destructive": {
+        "DEFAULT": "#EF4444",
+        "foreground": "#FFFFFF"
+      }
+    },
+    "gradients": {
+      "hero": "linear-gradient(135deg, #0056D2 0%, #003C9E 100%)",
+      "card_hover": "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(0,86,210,0.05) 100%)"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm font-bold uppercase tracking-wider shadow-md transition-all active:scale-95",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-sm font-bold uppercase shadow-sm",
+      "outline": "border-2 border-primary text-primary hover:bg-primary/10 rounded-sm font-semibold uppercase",
+      "ghost": "hover:bg-neutral-100 text-neutral-700 hover:text-primary font-medium"
+    },
+    "cards": {
+      "base": "bg-white border border-neutral-200 shadow-sm hover:shadow-md transition-shadow rounded-lg overflow-hidden",
+      "machine": "group relative border border-neutral-200 hover:border-primary/50 transition-colors bg-white rounded-xl shadow-sm overflow-hidden",
+      "machine_image_container": "aspect-[4/3] bg-neutral-100 relative overflow-hidden group-hover:scale-105 transition-transform duration-500"
+    },
+    "inputs": {
+      "base": "h-12 border-neutral-300 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-md bg-white transition-all",
+      "signature_pad": "border-2 border-dashed border-neutral-300 rounded-lg bg-neutral-50 hover:bg-white transition-colors h-48 w-full flex items-center justify-center cursor-crosshair"
+    }
+  },
+  "layout": {
+    "spacing": {
+      "page_padding": "px-4 md:px-8 lg:px-12",
+      "section_gap": "gap-8 md:gap-12 lg:gap-16",
+      "card_padding": "p-6"
+    },
+    "grids": {
+      "dashboard": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6",
+      "machines": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+    },
+    "containers": {
+      "max_width": "max-w-7xl mx-auto"
+    }
+  },
+  "assets": {
+    "images": {
+      "hero_bg": "https://images.unsplash.com/photo-1714575600356-6635434699f8?auto=format&fit=crop&q=80",
+      "machine_tipper": "https://images.unsplash.com/photo-1678984239707-8eb712b6fae1?auto=format&fit=crop&q=80",
+      "machine_excavator_small": "https://images.unsplash.com/photo-1768666197979-f8f0777ef04c?auto=format&fit=crop&q=80",
+      "machine_vac_truck": "https://images.unsplash.com/photo-1769629918284-64b191456534?auto=format&fit=crop&q=80",
+      "logo_placeholder": "https://placehold.co/200x60/0056D2/FFFFFF?text=REVMA+HIRE"
+    },
+    "icons": {
+      "library": "lucide-react",
+      "preferred_style": "stroke-width={1.5} size={20}"
+    }
+  },
+  "features": {
+    "signature": {
+      "library": "react-signature-canvas",
+      "instruction": "Must allow clear, save, and resize. Background should be faint grid or white."
+    },
+    "pdf_generation": {
+      "library": "jspdf",
+      "instruction": "Generate standard Australian hire agreement layout. Include logo, timestamp, and signature images."
+    }
+  },
+  "instructions_to_main_agent": [
+    "Install 'lucide-react' for icons.",
+    "Install 'react-signature-canvas' for the signature pad.",
+    "Install 'jspdf' for PDF generation.",
+    "Use 'Barlow Condensed' from Google Fonts for all headings.",
+    "Use 'Public Sans' from Google Fonts for all body text.",
+    "Ensure all forms are mobile-responsive with h-12 inputs for easy tapping.",
+    "The Dashboard must separate 'Active Hires' from 'Fleet Management'.",
+    "Pre-start checklist must block the 'Sign' button until all items are checked.",
+    "Use the provided image URLs for the machine cards.",
+    "Implement a 'Tactical' visual style: sharp corners on buttons, high contrast, industrial blue/orange palette."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur) only for overlays/modals in this industrial context.",
+    "You MUST NOT apply universal transition. Eg: transition: all.",
+    "You MUST NOT center align the app container.",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+    "NEVER: use AI assistant Emoji characters like 🤖 etc.",
+    "Every interaction needs micro-animations - hover states, transitions.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Subtle grain textures, noise overlays, custom cursors: separates good from extraordinary.",
+    "Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN"
+  ]
+}
