@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Truck, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export default function LoginPage() {
@@ -39,15 +39,13 @@ export default function LoginPage() {
             Back to Home
           </Link>
           
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-[#E63946] rounded-full flex items-center justify-center">
-              <Truck className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-neutral-900">REVMA HIRE</h1>
-              <p className="text-neutral-500 text-sm">Equipment Portal</p>
-            </div>
-          </div>
+          <Link to="/" className="flex items-center gap-3 mb-8">
+            <img 
+              src="https://www.revma.com.au/assets/images/revma-logo.jpg" 
+              alt="Revma Logo" 
+              className="h-12 w-auto"
+            />
+          </Link>
 
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-neutral-900 mb-2">Welcome back</h2>

@@ -5,7 +5,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Checkbox } from "../components/ui/checkbox";
-import { Truck, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RegisterPage() {
@@ -79,12 +79,13 @@ export default function RegisterPage() {
             Back to Home
           </Link>
 
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-[#E63946] rounded-full flex items-center justify-center">
-              <Truck className="w-6 h-6 text-white" />
-            </div>
-            <span className="font-bold text-xl text-neutral-900">REVMA HIRE</span>
-          </div>
+          <Link to="/" className="flex items-center gap-3 mb-6">
+            <img 
+              src="https://www.revma.com.au/assets/images/revma-logo.jpg" 
+              alt="Revma Logo" 
+              className="h-10 w-auto"
+            />
+          </Link>
 
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-neutral-900 mb-1">Create Account</h2>
