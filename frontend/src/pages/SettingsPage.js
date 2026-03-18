@@ -99,7 +99,7 @@ export default function SettingsPage() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="spinner border-[#0056D2] border-t-transparent w-8 h-8"></div>
+          <div className="spinner border-[#E63946] border-t-transparent w-8 h-8"></div>
         </div>
       </Layout>
     );

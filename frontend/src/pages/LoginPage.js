@@ -40,7 +40,7 @@ export default function LoginPage() {
           </Link>
           
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-[#0056D2] rounded-sm flex items-center justify-center">
+            <div className="w-12 h-12 bg-[#E63946] rounded-full flex items-center justify-center">
               <Truck className="w-7 h-7 text-white" />
             </div>
             <div>
@@ -104,7 +104,7 @@ export default function LoginPage() {
 
           <p className="mt-6 text-center text-neutral-600">
             Don't have an account?{" "}
-            <Link to="/register" className="text-[#0056D2] font-medium hover:underline">
+            <Link to="/register" className="text-[#E63946] font-medium hover:underline">
               Sign up
             </Link>
           </p>

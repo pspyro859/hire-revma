@@ -89,7 +89,7 @@ export default function InquiriesPage() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="spinner border-[#0056D2] border-t-transparent w-8 h-8"></div>
+          <div className="spinner border-[#E63946] border-t-transparent w-8 h-8"></div>
         </div>
       </Layout>
     );
@@ -178,7 +178,7 @@ export default function InquiriesPage() {
                       </div>
                       <div className="flex flex-wrap gap-2 mt-3">
                         {inquiry.equipment.map((eq, idx) => (
-                          <span key={idx} className="px-2 py-1 bg-[#0056D2]/10 text-[#0056D2] rounded text-xs font-medium">
+                          <span key={idx} className="px-2 py-1 bg-[#E63946]/10 text-[#E63946] rounded text-xs font-medium">
                             {eq}
                           </span>
                         ))}
@@ -260,7 +260,7 @@ export default function InquiriesPage() {
                             size="sm"
                             variant={inquiry.status === status ? "default" : "outline"}
                             onClick={() => handleStatusChange(inquiry.id, status)}
-                            className={inquiry.status === status ? "bg-[#0056D2]" : ""}
+                            className={inquiry.status === status ? "bg-[#E63946]" : ""}
                             data-testid={`status-btn-${status}`}
                           >
                             {status.charAt(0).toUpperCase() + status.slice(1)}

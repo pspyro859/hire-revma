@@ -280,7 +280,7 @@ export default function AgreementDetailPage() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="spinner border-[#0056D2] border-t-transparent w-8 h-8"></div>
+          <div className="spinner border-[#E63946] border-t-transparent w-8 h-8"></div>
         </div>
       </Layout>
     );
@@ -306,7 +306,7 @@ export default function AgreementDetailPage() {
         {/* Header */}
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-neutral-600 hover:text-[#0056D2] mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-neutral-600 hover:text-[#E63946] mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
@@ -344,7 +344,7 @@ export default function AgreementDetailPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
                   activeTab === tab.id
-                    ? "bg-[#0056D2] text-white"
+                    ? "bg-[#E63946] text-white"
                     : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
                 }`}
                 data-testid={`tab-${tab.id}`}
@@ -363,8 +363,8 @@ export default function AgreementDetailPage() {
             <div className="p-6 space-y-6 animate-fade-in">
               {/* Customer */}
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-[#0056D2]/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <User className="w-5 h-5 text-[#0056D2]" />
+                <div className="w-10 h-10 bg-[#E63946]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <User className="w-5 h-5 text-[#E63946]" />
                 </div>
                 <div>
                   <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Customer</p>
@@ -381,8 +381,8 @@ export default function AgreementDetailPage() {
 
               {/* Equipment */}
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-[#FF6B00]/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Truck className="w-5 h-5 text-[#FF6B00]" />
+                <div className="w-10 h-10 bg-[#E63946]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Truck className="w-5 h-5 text-[#E63946]" />
                 </div>
                 <div>
                   <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Equipment</p>
@@ -436,7 +436,7 @@ export default function AgreementDetailPage() {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Hire Rate</p>
-                      <p className="text-2xl font-bold text-[#FF6B00]">
+                      <p className="text-2xl font-bold text-[#E63946]">
                         ${agreement.hire_rate}
                         <span className="text-sm font-normal text-neutral-500">/{agreement.hire_rate_type}</span>
                       </p>

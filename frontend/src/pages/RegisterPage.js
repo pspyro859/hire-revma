@@ -80,7 +80,7 @@ export default function RegisterPage() {
           </Link>
 
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-[#0056D2] rounded-sm flex items-center justify-center">
+            <div className="w-10 h-10 bg-[#E63946] rounded-full flex items-center justify-center">
               <Truck className="w-6 h-6 text-white" />
             </div>
             <span className="font-bold text-xl text-neutral-900">REVMA HIRE</span>
@@ -242,7 +242,7 @@ export default function RegisterPage() {
 
           <p className="mt-6 text-center text-neutral-600 text-sm">
             Already have an account?{" "}
-            <Link to="/login" className="text-[#0056D2] font-medium hover:underline">
+            <Link to="/login" className="text-[#E63946] font-medium hover:underline">
               Sign in
             </Link>
           </p>

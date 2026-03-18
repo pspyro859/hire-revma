@@ -114,7 +114,7 @@ export default function NewAgreementPage() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="spinner border-[#0056D2] border-t-transparent w-8 h-8"></div>
+          <div className="spinner border-[#E63946] border-t-transparent w-8 h-8"></div>
         </div>
       </Layout>
     );
@@ -126,7 +126,7 @@ export default function NewAgreementPage() {
         {/* Header */}
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-neutral-600 hover:text-[#0056D2] mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-neutral-600 hover:text-[#E63946] mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
@@ -230,7 +230,7 @@ export default function NewAgreementPage() {
                     onClick={() => setFormData({ ...formData, machine_id: machine.id })}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                       formData.machine_id === machine.id
-                        ? "border-[#0056D2] bg-[#0056D2]/5"
+                        ? "border-[#E63946] bg-[#E63946]/5"
                         : "border-neutral-200 hover:border-neutral-300"
                     }`}
                     data-testid={`select-machine-${machine.id}`}
@@ -244,7 +244,7 @@ export default function NewAgreementPage() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-neutral-900 truncate">{machine.name}</p>
                         <p className="text-sm text-neutral-500">{machine.make} {machine.model}</p>
-                        <p className="text-lg font-bold text-[#FF6B00] mt-1">
+                        <p className="text-lg font-bold text-[#E63946] mt-1">
                           ${machine.daily_rate}<span className="text-sm font-normal text-neutral-500">/day</span>
                         </p>
                       </div>
@@ -437,7 +437,7 @@ export default function NewAgreementPage() {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Hire Rate</p>
-                      <p className="text-2xl font-bold text-[#FF6B00]">
+                      <p className="text-2xl font-bold text-[#E63946]">
                         ${formData.hire_rate_type === "daily" ? selectedMachine?.daily_rate : formData.hire_rate_type === "weekly" ? selectedMachine?.weekly_rate : selectedMachine?.monthly_rate}
                         <span className="text-sm font-normal text-neutral-500">/{formData.hire_rate_type}</span>
                       </p>

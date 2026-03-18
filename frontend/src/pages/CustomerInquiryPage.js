@@ -105,7 +105,7 @@ export default function CustomerInquiryPage() {
             Thanks for your enquiry. We'll review your request and get back to you with a quote within one business day.
           </p>
           <p className="text-sm text-neutral-500 mb-8">
-            If it's urgent, call us on <a href="tel:0448473862" className="text-[#0056D2] font-medium">0448 473 862</a>
+            If it's urgent, call us on <a href="tel:0448473862" className="text-[#E63946] font-medium">0448 473 862</a>
           </p>
           <Button onClick={() => navigate("/")} className="btn-primary w-full">
             Back to Home
@@ -122,7 +122,7 @@ export default function CustomerInquiryPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#0056D2] rounded-sm flex items-center justify-center">
+              <div className="w-10 h-10 bg-[#E63946] rounded-full flex items-center justify-center">
                 <Truck className="w-6 h-6 text-white" />
               </div>
               <span className="font-bold text-xl text-neutral-900">REVMA HIRE</span>
@@ -132,7 +132,7 @@ export default function CustomerInquiryPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link to="/" className="inline-flex items-center gap-2 text-neutral-600 hover:text-[#0056D2] mb-6 transition-colors">
+        <Link to="/" className="inline-flex items-center gap-2 text-neutral-600 hover:text-[#E63946] mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Back to Home
         </Link>
@@ -149,7 +149,7 @@ export default function CustomerInquiryPage() {
           {["Fill in form", "We send quote", "Approve & sign", "Collect"].map((step, idx) => (
             <div key={idx} className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                idx === 0 ? "bg-[#0056D2] text-white" : "bg-neutral-200 text-neutral-500"
+                idx === 0 ? "bg-[#E63946] text-white" : "bg-neutral-200 text-neutral-500"
               }`}>
                 {idx + 1}
               </div>
@@ -259,7 +259,7 @@ export default function CustomerInquiryPage() {
             
             {loading ? (
               <div className="flex justify-center py-8">
-                <div className="spinner border-[#0056D2] border-t-transparent"></div>
+                <div className="spinner border-[#E63946] border-t-transparent"></div>
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -270,7 +270,7 @@ export default function CustomerInquiryPage() {
                     onClick={() => handleEquipmentToggle(machine.name)}
                     className={`p-4 rounded-lg border-2 text-left transition-all ${
                       formData.equipment.includes(machine.name)
-                        ? "border-[#0056D2] bg-[#0056D2]/5"
+                        ? "border-[#E63946] bg-[#E63946]/5"
                         : "border-neutral-200 hover:border-neutral-300"
                     }`}
                     data-testid={`equipment-${machine.id}`}
@@ -278,7 +278,7 @@ export default function CustomerInquiryPage() {
                     <div className="flex items-center gap-3">
                       <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                         formData.equipment.includes(machine.name)
-                          ? "bg-[#0056D2] border-[#0056D2]"
+                          ? "bg-[#E63946] border-[#E63946]"
                           : "border-neutral-300"
                       }`}>
                         {formData.equipment.includes(machine.name) && (

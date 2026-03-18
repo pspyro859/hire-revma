@@ -80,7 +80,7 @@ export default function MachinesPage() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="spinner border-[#0056D2] border-t-transparent w-8 h-8"></div>
+          <div className="spinner border-[#E63946] border-t-transparent w-8 h-8"></div>
         </div>
       </Layout>
     );
@@ -107,7 +107,7 @@ export default function MachinesPage() {
               placeholder="Search equipment..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 h-12 border border-neutral-300 rounded-lg focus:border-[#0056D2] focus:ring-2 focus:ring-[#0056D2]/20 transition-all"
+              className="w-full pl-10 pr-4 h-12 border border-neutral-300 rounded-lg focus:border-[#E63946] focus:ring-2 focus:ring-[#E63946]/20 transition-all"
               data-testid="machine-search"
             />
           </div>
@@ -163,7 +163,7 @@ export default function MachinesPage() {
                 {/* Content */}
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-medium text-[#0056D2] uppercase tracking-wider bg-[#0056D2]/10 px-2 py-0.5 rounded">
+                    <span className="text-xs font-medium text-[#E63946] uppercase tracking-wider bg-[#E63946]/10 px-2 py-0.5 rounded">
                       {machine.category}
                     </span>
                   </div>
@@ -199,7 +199,7 @@ export default function MachinesPage() {
                   <div className="border-t border-neutral-100 pt-4">
                     <div className="flex items-baseline justify-between mb-4">
                       <div>
-                        <span className="text-2xl font-bold text-[#FF6B00]">${machine.daily_rate}</span>
+                        <span className="text-2xl font-bold text-[#E63946]">${machine.daily_rate}</span>
                         <span className="text-neutral-500">/day</span>
                       </div>
                       <div className="text-right text-sm text-neutral-500">

@@ -46,7 +46,7 @@ export default function Layout({ children }) {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/dashboard" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#0056D2] rounded-sm flex items-center justify-center">
+              <div className="w-10 h-10 bg-[#E63946] rounded-full flex items-center justify-center">
                 <Truck className="w-6 h-6 text-white" />
               </div>
               <span className="font-bold text-xl tracking-tight text-neutral-900 hidden sm:block">
@@ -89,8 +89,8 @@ export default function Layout({ children }) {
               {/* User menu */}
               <div className="hidden md:flex items-center gap-3 border-l border-neutral-200 pl-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-[#0056D2]/10 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-[#0056D2]" />
+                  <div className="w-8 h-8 bg-[#E63946]/10 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-[#E63946]" />
                   </div>
                   <div className="text-sm">
                     <p className="font-medium text-neutral-900">{user?.full_name}</p>
@@ -143,8 +143,8 @@ export default function Layout({ children }) {
               
               <div className="border-t border-neutral-200 pt-3 mt-3">
                 <div className="px-4 py-2 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[#0056D2]/10 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-[#0056D2]" />
+                  <div className="w-10 h-10 bg-[#E63946]/10 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-[#E63946]" />
                   </div>
                   <div>
                     <p className="font-medium text-neutral-900">{user?.full_name}</p>
@@ -187,7 +187,7 @@ export default function Layout({ children }) {
         })}
         {isStaff && (
           <Link to="/agreements/new" className="mobile-nav-item">
-            <div className="w-10 h-10 bg-[#FF6B00] rounded-full flex items-center justify-center -mt-4 shadow-lg">
+            <div className="w-10 h-10 bg-[#E63946] rounded-full flex items-center justify-center -mt-4 shadow-lg">
               <Plus className="w-5 h-5 text-white" />
             </div>
           </Link>

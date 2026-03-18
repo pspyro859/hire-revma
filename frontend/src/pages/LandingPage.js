@@ -49,7 +49,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#0056D2] rounded-sm flex items-center justify-center">
+              <div className="w-10 h-10 bg-[#E63946] rounded-full flex items-center justify-center">
                 <Truck className="w-6 h-6 text-white" />
               </div>
               <span className="font-bold text-xl tracking-tight text-neutral-900">REVMA HIRE</span>
@@ -58,14 +58,14 @@ export default function LandingPage() {
             <div className="flex items-center gap-3">
               <Link
                 to="/inquiry"
-                className="hidden sm:inline-flex text-neutral-600 hover:text-[#0056D2] font-medium transition-colors"
+                className="hidden sm:inline-flex text-neutral-600 hover:text-[#E63946] font-medium transition-colors"
               >
                 Hire Enquiry
               </Link>
               <Button
                 onClick={() => navigate("/login")}
                 variant="outline"
-                className="border-[#0056D2] text-[#0056D2]"
+                className="border-[#1A1D23] text-[#1A1D23] rounded-full hover:bg-[#1A1D23] hover:text-white"
                 data-testid="login-btn"
               >
                 Login
@@ -87,14 +87,14 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6 animate-slide-up">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-sm">
-                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#E63946] rounded-full text-sm">
+                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
                 Newcastle & Hunter Valley
               </div>
               
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
                 HEAVY EQUIPMENT<br />
-                <span className="text-[#FF6B00]">HIRE & AGREEMENTS</span>
+                <span className="text-[#E63946]">HIRE & AGREEMENTS</span>
               </h1>
               
               <p className="text-lg text-white/80 max-w-lg">
@@ -105,7 +105,7 @@ export default function LandingPage() {
                 <Button
                   onClick={() => navigate("/inquiry")}
                   size="lg"
-                  className="btn-secondary text-lg px-8"
+                  className="bg-[#E63946] hover:bg-[#D32F3D] text-white text-lg px-8 rounded-full"
                   data-testid="hire-enquiry-btn"
                 >
                   Start Hire Enquiry
@@ -115,7 +115,7 @@ export default function LandingPage() {
                   onClick={() => navigate("/register")}
                   size="lg"
                   variant="outline"
-                  className="border-white text-white hover:bg-white hover:text-[#0056D2] text-lg px-8"
+                  className="border-white text-white hover:bg-white hover:text-[#1A1D23] text-lg px-8 rounded-full"
                 >
                   Customer Portal
                 </Button>
@@ -141,8 +141,8 @@ export default function LandingPage() {
               const Icon = feature.icon;
               return (
                 <div key={idx} className="bg-white rounded-xl p-6 shadow-sm border border-neutral-200 card-hover">
-                  <div className="w-12 h-12 bg-[#0056D2]/10 rounded-lg flex items-center justify-center mb-4">
-                    <Icon className="w-6 h-6 text-[#0056D2]" />
+                  <div className="w-12 h-12 bg-[#E63946]/10 rounded-lg flex items-center justify-center mb-4">
+                    <Icon className="w-6 h-6 text-[#E63946]" />
                   </div>
                   <h3 className="text-xl font-bold text-neutral-900 mb-2">{feature.title}</h3>
                   <p className="text-neutral-600">{feature.desc}</p>
@@ -167,7 +167,7 @@ export default function LandingPage() {
           
           {loading ? (
             <div className="flex justify-center py-12">
-              <div className="spinner border-[#0056D2] border-t-transparent w-8 h-8"></div>
+              <div className="spinner border-[#E63946] border-t-transparent w-8 h-8"></div>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -182,7 +182,7 @@ export default function LandingPage() {
                   </div>
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-[#0056D2] uppercase tracking-wider">
+                      <span className="text-xs font-medium text-[#E63946] uppercase tracking-wider">
                         {machine.category}
                       </span>
                       <span className={`text-xs px-2 py-1 rounded-full ${
@@ -194,7 +194,7 @@ export default function LandingPage() {
                     <h3 className="text-xl font-bold text-neutral-900 mb-1">{machine.name}</h3>
                     <p className="text-sm text-neutral-500 mb-4">{machine.make} {machine.model}</p>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold text-[#FF6B00]">${machine.daily_rate}</span>
+                      <span className="text-2xl font-bold text-[#E63946]">${machine.daily_rate}</span>
                       <span className="text-neutral-500">/day</span>
                     </div>
                   </div>
@@ -217,21 +217,21 @@ export default function LandingPage() {
       </section>
 
       {/* Contact Section */}
-      <section className="py-16 bg-neutral-900 text-white">
+      <section className="py-16 bg-[#1A1D23] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12">
             <div>
               <h2 className="text-3xl font-bold mb-6">REVMA PTY LTD</h2>
               <p className="text-neutral-400 mb-8 max-w-md">
-                Electrical and pump contracting specialists serving Newcastle, Hunter Valley, and the Central Coast since 2006.
+                Electrical and pump contracting specialists serving Newcastle, Hunter Valley, and the Central Coast since 2005.
               </p>
               
               <div className="space-y-4">
-                <a href="tel:0448473862" className="flex items-center gap-3 text-white hover:text-[#FF6B00] transition-colors">
+                <a href="tel:0448473862" className="flex items-center gap-3 text-white hover:text-[#E63946] transition-colors">
                   <Phone className="w-5 h-5" />
                   0448 473 862
                 </a>
-                <a href="mailto:office@revma.com.au" className="flex items-center gap-3 text-white hover:text-[#FF6B00] transition-colors">
+                <a href="mailto:office@revma.com.au" className="flex items-center gap-3 text-white hover:text-[#E63946] transition-colors">
                   <Mail className="w-5 h-5" />
                   office@revma.com.au
                 </a>

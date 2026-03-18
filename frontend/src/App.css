@@ -1,8 +1,8 @@
 /* App-specific styles */
 
-/* Hero section gradient */
+/* Hero section gradient - Revma dark theme */
 .hero-gradient {
-    background: linear-gradient(135deg, #0056D2 0%, #003C9E 100%);
+    background: linear-gradient(135deg, #1A1D23 0%, #252830 100%);
 }
 
 /* Card hover effects */
@@ -12,7 +12,7 @@
 
 .card-hover:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 24px -8px rgba(0, 86, 210, 0.15);
+    box-shadow: 0 12px 24px -8px rgba(230, 57, 70, 0.15);
 }
 
 /* Machine card image zoom */
@@ -108,8 +108,8 @@
 }
 
 .stat-card:hover {
-    border-color: #0056D2;
-    box-shadow: 0 4px 12px rgba(0, 86, 210, 0.1);
+    border-color: #E63946;
+    box-shadow: 0 4px 12px rgba(230, 57, 70, 0.1);
 }
 
 /* Table styles */

@@ -77,7 +77,7 @@ export default function DashboardPage() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="spinner border-[#0056D2] border-t-transparent w-8 h-8"></div>
+          <div className="spinner border-[#E63946] border-t-transparent w-8 h-8"></div>
         </div>
       </Layout>
     );
@@ -103,7 +103,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="stat-card">
             <div className="flex items-center justify-between mb-3">
-              <FileText className="w-5 h-5 text-[#0056D2]" />
+              <FileText className="w-5 h-5 text-[#E63946]" />
               <span className="text-xs text-neutral-500 uppercase">Total</span>
             </div>
             <p className="text-3xl font-bold text-neutral-900">{stats.total}</p>
@@ -131,19 +131,19 @@ export default function DashboardPage() {
           {isStaff ? (
             <div className="stat-card">
               <div className="flex items-center justify-between mb-3">
-                <MessageSquare className="w-5 h-5 text-[#FF6B00]" />
+                <MessageSquare className="w-5 h-5 text-[#E63946]" />
                 <span className="text-xs text-neutral-500 uppercase">New</span>
               </div>
-              <p className="text-3xl font-bold text-[#FF6B00]">{stats.newInquiries}</p>
+              <p className="text-3xl font-bold text-[#E63946]">{stats.newInquiries}</p>
               <p className="text-sm text-neutral-500">Inquiries</p>
             </div>
           ) : (
             <div className="stat-card">
               <div className="flex items-center justify-between mb-3">
-                <Truck className="w-5 h-5 text-[#0056D2]" />
+                <Truck className="w-5 h-5 text-[#E63946]" />
                 <span className="text-xs text-neutral-500 uppercase">Fleet</span>
               </div>
-              <p className="text-3xl font-bold text-[#0056D2]">{stats.availableMachines}</p>
+              <p className="text-3xl font-bold text-[#E63946]">{stats.availableMachines}</p>
               <p className="text-sm text-neutral-500">Available</p>
             </div>
           )}
@@ -168,7 +168,7 @@ export default function DashboardPage() {
               <MessageSquare className="w-4 h-4 mr-2" />
               View Inquiries
               {stats.newInquiries > 0 && (
-                <span className="ml-2 w-5 h-5 bg-[#FF6B00] text-white text-xs rounded-full flex items-center justify-center">
+                <span className="ml-2 w-5 h-5 bg-[#E63946] text-white text-xs rounded-full flex items-center justify-center">
                   {stats.newInquiries}
                 </span>
               )}
@@ -186,7 +186,7 @@ export default function DashboardPage() {
               variant="ghost"
               size="sm"
               onClick={() => navigate("/machines")}
-              className="text-[#0056D2]"
+              className="text-[#E63946]"
             >
               View Equipment
               <ChevronRight className="w-4 h-4 ml-1" />
@@ -218,7 +218,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-1">
-                        <span className="font-mono text-sm text-[#0056D2] font-medium">
+                        <span className="font-mono text-sm text-[#E63946] font-medium">
                           {agreement.agreement_number}
                         </span>
                         {getStatusBadge(agreement.status)}
