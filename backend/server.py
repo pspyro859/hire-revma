@@ -720,7 +720,7 @@ async def seed_data():
     }
     await db.users.insert_one(staff_doc)
     
-    # Seed machines from Revma website
+    # Seed machines from Revma website with actual images
     machines = [
         {
             "id": str(uuid.uuid4()),
@@ -729,7 +729,7 @@ async def seed_data():
             "model": "NLR 45-150",
             "category": "tipper",
             "description": "Reliable light-duty Isuzu NLR tipper truck ideal for hauling soil, gravel, sand, rubble and construction materials. Perfect for earthworks, demolition and landscaping projects.",
-            "image_url": "https://images.unsplash.com/photo-1678984239707-8eb712b6fae1?auto=format&fit=crop&q=80&w=600",
+            "image_url": "https://www.revma.com.au/assets/images/isuzu-nlr-tipper.webp",
             "daily_rate": 190.0,
             "weekly_rate": 1140.0,
             "monthly_rate": 3990.0,
@@ -750,7 +750,7 @@ async def seed_data():
             "model": "K008-3",
             "category": "excavator",
             "description": "Ultra-compact Kubota K008-3 mini excavator — perfect for tight access areas, landscaping, trenching and small earthworks where a larger machine can't fit.",
-            "image_url": "https://images.unsplash.com/photo-1768666197979-f8f0777ef04c?auto=format&fit=crop&q=80&w=600",
+            "image_url": "https://www.revma.com.au/assets/images/kubota-k008-3.jpg",
             "daily_rate": 220.0,
             "weekly_rate": 1320.0,
             "monthly_rate": 4620.0,
@@ -771,7 +771,7 @@ async def seed_data():
             "model": "U25",
             "category": "excavator",
             "description": "Versatile Kubota 2.5 tonne excavator suited to residential and commercial earthworks, trenching, drainage, landscaping and civil construction projects.",
-            "image_url": "https://images.unsplash.com/photo-1768666197979-f8f0777ef04c?auto=format&fit=crop&q=80&w=600",
+            "image_url": "https://www.revma.com.au/assets/images/kubota-2.5t.jpg",
             "daily_rate": 260.0,
             "weekly_rate": 1560.0,
             "monthly_rate": 5460.0,
@@ -791,7 +791,7 @@ async def seed_data():
             "model": "7x5 Single Axle",
             "category": "trailer",
             "description": "Sturdy 7x5 single axle box trailer suitable for moving equipment, materials and general loads. Easy to tow and ideal for both residential and commercial use.",
-            "image_url": "https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&q=80&w=600",
+            "image_url": "https://www.revma.com.au/assets/images/box-trailer-7x5.jpg",
             "daily_rate": 60.0,
             "weekly_rate": 360.0,
             "monthly_rate": 1260.0,
@@ -811,7 +811,7 @@ async def seed_data():
             "model": "FX20",
             "category": "vac",
             "description": "The Ditch Witch FX20 vacuum excavation trailer is ideal for safe non-destructive digging around underground services, potholing, slot trenching and debris removal.",
-            "image_url": "https://images.unsplash.com/photo-1769629918284-64b191456534?auto=format&fit=crop&q=80&w=600",
+            "image_url": "https://www.revma.com.au/assets/images/ditch-witch-fx20.jpg",
             "daily_rate": 350.0,
             "weekly_rate": 2100.0,
             "monthly_rate": 7350.0,
@@ -832,7 +832,7 @@ async def seed_data():
             "model": "VX30-250",
             "category": "vac",
             "description": "The Vermeer VX30-250 vacuum excavation trailer delivers powerful suction for non-destructive digging, utility locating, potholing and hydro excavation on civil and construction sites.",
-            "image_url": "https://images.unsplash.com/photo-1769629918284-64b191456534?auto=format&fit=crop&q=80&w=600",
+            "image_url": "https://www.revma.com.au/assets/images/vermeer-vx30-250.jpg",
             "daily_rate": 500.0,
             "weekly_rate": 3000.0,
             "monthly_rate": 10500.0,
