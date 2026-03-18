@@ -1,0 +1,15 @@
+{
+  "name": "revma-hire-backend",
+  "version": "1.0.0",
+  "description": "Revma Heavy Equipment Hire API",
+  "scripts": {
+    "start": "python server_mysql.py",
+    "dev": "uvicorn server_mysql:app --host 0.0.0.0 --port 8001 --reload"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["equipment-hire", "revma", "fastapi"],
+  "author": "Revma Pty Ltd",
+  "license": "PRIVATE"
+}

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
@@ -16,6 +16,9 @@ import bcrypt
 import base64
 import aiofiles
 import json
+import aiosmtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -29,6 +32,14 @@ db = client[os.environ['DB_NAME']]
 JWT_SECRET = os.environ.get('JWT_SECRET', 'revma-hire-secret-key-change-in-production')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
+
+# SMTP Configuration
+SMTP_HOST = os.environ.get('SMTP_HOST', '')
+SMTP_PORT = int(os.environ.get('SMTP_PORT', '465'))
+SMTP_USERNAME = os.environ.get('SMTP_USERNAME', '')
+SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
+SMTP_FROM_EMAIL = os.environ.get('SMTP_FROM_EMAIL', '')
+NOTIFICATION_EMAIL = os.environ.get('NOTIFICATION_EMAIL', '')
 
 # Create directories for uploads
 UPLOAD_DIR = ROOT_DIR / "uploads"
@@ -245,6 +256,131 @@ def create_token(user_id: str, email: str, role: str) -> str:
         "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+# ======================== EMAIL HELPERS ========================
+
+async def send_email(to_email: str, subject: str, html_content: str):
+    """Send email via SMTP"""
+    if not all([SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD]):
+        logger.warning("SMTP not configured, skipping email")
+        return False
+    
+    try:
+        message = MIMEMultipart("alternative")
+        message["From"] = SMTP_FROM_EMAIL
+        message["To"] = to_email
+        message["Subject"] = subject
+        
+        html_part = MIMEText(html_content, "html")
+        message.attach(html_part)
+        
+        await aiosmtplib.send(
+            message,
+            hostname=SMTP_HOST,
+            port=SMTP_PORT,
+            username=SMTP_USERNAME,
+            password=SMTP_PASSWORD,
+            use_tls=True
+        )
+        logger.info(f"Email sent successfully to {to_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send email: {str(e)}")
+        return False
+
+async def send_inquiry_notification(inquiry: dict):
+    """Send notification email for new inquiry"""
+    if not NOTIFICATION_EMAIL:
+        return
+    
+    equipment_list = ", ".join(inquiry.get("equipment", []))
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background-color: #1A1D23; color: white; padding: 20px; text-align: center; }}
+            .header h1 {{ margin: 0; color: #E63946; }}
+            .content {{ padding: 20px; background-color: #f9f9f9; }}
+            .field {{ margin-bottom: 15px; }}
+            .label {{ font-weight: bold; color: #1A1D23; }}
+            .value {{ color: #555; }}
+            .equipment {{ background-color: #E63946; color: white; padding: 5px 10px; border-radius: 4px; display: inline-block; margin: 2px; }}
+            .footer {{ text-align: center; padding: 20px; color: #888; font-size: 12px; }}
+            .cta {{ background-color: #E63946; color: white; padding: 12px 24px; text-decoration: none; border-radius: 25px; display: inline-block; margin-top: 15px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>REVMA HIRE</h1>
+                <p>New Equipment Hire Enquiry</p>
+            </div>
+            <div class="content">
+                <h2>Customer Details</h2>
+                <div class="field">
+                    <span class="label">Name:</span>
+                    <span class="value">{inquiry.get('first_name', '')} {inquiry.get('last_name', '')}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Email:</span>
+                    <span class="value">{inquiry.get('email', '')}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Phone:</span>
+                    <span class="value">{inquiry.get('phone', '')}</span>
+                </div>
+                {"<div class='field'><span class='label'>Company:</span> <span class='value'>" + inquiry.get('company_name', '') + "</span></div>" if inquiry.get('is_business') else ""}
+                {"<div class='field'><span class='label'>ABN:</span> <span class='value'>" + inquiry.get('abn', '') + "</span></div>" if inquiry.get('abn') else ""}
+                
+                <h2>Equipment Required</h2>
+                <div class="field">
+                    {"".join([f'<span class="equipment">{eq}</span>' for eq in inquiry.get('equipment', [])])}
+                </div>
+                
+                <h2>Hire Details</h2>
+                <div class="field">
+                    <span class="label">Start Date:</span>
+                    <span class="value">{inquiry.get('hire_start_date', '')}</span>
+                </div>
+                <div class="field">
+                    <span class="label">End Date:</span>
+                    <span class="value">{inquiry.get('hire_end_date', '')}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Preferred Rate:</span>
+                    <span class="value">{inquiry.get('hire_rate_preference', '').capitalize()}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Delivery Method:</span>
+                    <span class="value">{inquiry.get('delivery_method', '').capitalize()}</span>
+                </div>
+                {"<div class='field'><span class='label'>Delivery Address:</span> <span class='value'>" + inquiry.get('delivery_address', '') + "</span></div>" if inquiry.get('delivery_address') else ""}
+                
+                <h2>Job Description</h2>
+                <p>{inquiry.get('job_description', '')}</p>
+                
+                {"<h2>Additional Notes</h2><p>" + inquiry.get('additional_notes', '') + "</p>" if inquiry.get('additional_notes') else ""}
+                
+                <p style="text-align: center; margin-top: 20px;">
+                    <a href="mailto:{inquiry.get('email', '')}" class="cta">Reply to Customer</a>
+                    <a href="tel:{inquiry.get('phone', '')}" class="cta" style="background-color: #1A1D23;">Call Customer</a>
+                </p>
+            </div>
+            <div class="footer">
+                <p>This notification was sent from the Revma Equipment Hire Portal</p>
+                <p>Revma Pty Ltd | ABN: 37 121 035 710 | 0448 473 862</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    subject = f"New Hire Enquiry: {inquiry.get('first_name', '')} {inquiry.get('last_name', '')} - {equipment_list}"
+    await send_email(NOTIFICATION_EMAIL, subject, html_content)
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
@@ -591,7 +727,7 @@ async def get_signature(filename: str):
 # ======================== INQUIRY ROUTES ========================
 
 @api_router.post("/inquiries", response_model=InquiryResponse)
-async def create_inquiry(inquiry: InquiryCreate):
+async def create_inquiry(inquiry: InquiryCreate, background_tasks: BackgroundTasks):
     inquiry_id = str(uuid.uuid4())
     inquiry_doc = {
         "id": inquiry_id,
@@ -601,6 +737,10 @@ async def create_inquiry(inquiry: InquiryCreate):
     }
     
     await db.inquiries.insert_one(inquiry_doc)
+    
+    # Send email notification in background
+    background_tasks.add_task(send_inquiry_notification, inquiry_doc)
+    
     return InquiryResponse(**inquiry_doc)
 
 @api_router.get("/inquiries", response_model=List[InquiryResponse])
@@ -686,39 +826,53 @@ async def seed_data():
     if existing_machines > 0:
         return {"message": "Data already seeded"}
     
-    # Create admin user
-    admin_id = str(uuid.uuid4())
-    admin_doc = {
-        "id": admin_id,
-        "email": "admin@revma.com.au",
-        "password_hash": hash_password("admin123"),
-        "full_name": "Admin User",
-        "phone": "0448 473 862",
-        "role": "admin",
-        "company_name": "Revma Pty Ltd",
-        "abn": "37 121 035 710",
-        "drivers_licence": None,
-        "address": "Unit 9/12 Channel Road, Mayfield West NSW 2304",
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    await db.users.insert_one(admin_doc)
+    return await reseed_data()
+
+@api_router.post("/reseed")
+async def reseed_data():
+    """Force reseed - drops existing data and reseeds"""
     
-    # Create staff user
-    staff_id = str(uuid.uuid4())
-    staff_doc = {
-        "id": staff_id,
-        "email": "staff@revma.com.au",
-        "password_hash": hash_password("staff123"),
-        "full_name": "Staff Member",
-        "phone": "0400 000 000",
-        "role": "staff",
-        "company_name": "Revma Pty Ltd",
-        "abn": None,
-        "drivers_licence": None,
-        "address": None,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    await db.users.insert_one(staff_doc)
+    # Drop existing collections
+    await db.machines.delete_many({})
+    await db.terms.delete_many({})
+    
+    # Create admin user if not exists
+    existing_admin = await db.users.find_one({"email": "admin@revma.com.au"})
+    if not existing_admin:
+        admin_id = str(uuid.uuid4())
+        admin_doc = {
+            "id": admin_id,
+            "email": "admin@revma.com.au",
+            "password_hash": hash_password("admin123"),
+            "full_name": "Admin User",
+            "phone": "0448 473 862",
+            "role": "admin",
+            "company_name": "Revma Pty Ltd",
+            "abn": "37 121 035 710",
+            "drivers_licence": None,
+            "address": "Unit 9/12 Channel Road, Mayfield West NSW 2304",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.users.insert_one(admin_doc)
+    
+    # Create staff user if not exists
+    existing_staff = await db.users.find_one({"email": "staff@revma.com.au"})
+    if not existing_staff:
+        staff_id = str(uuid.uuid4())
+        staff_doc = {
+            "id": staff_id,
+            "email": "staff@revma.com.au",
+            "password_hash": hash_password("staff123"),
+            "full_name": "Staff Member",
+            "phone": "0400 000 000",
+            "role": "staff",
+            "company_name": "Revma Pty Ltd",
+            "abn": None,
+            "drivers_licence": None,
+            "address": None,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.users.insert_one(staff_doc)
     
     # Seed machines from Revma website with actual images
     machines = [
