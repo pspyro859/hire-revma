@@ -132,3 +132,53 @@ export const seedData = async () => {
   const response = await axios.post(`${API_URL}/seed`);
   return response.data;
 };
+
+// Quotes API (Staff)
+export const createQuote = async (quoteData) => {
+  const response = await axios.post(`${API_URL}/quotes`, quoteData);
+  return response.data;
+};
+
+export const getQuotes = async (status = null) => {
+  const params = status ? `?status=${status}` : "";
+  const response = await axios.get(`${API_URL}/quotes${params}`);
+  return response.data;
+};
+
+export const getQuote = async (quoteId) => {
+  const response = await axios.get(`${API_URL}/quotes/${quoteId}`);
+  return response.data;
+};
+
+export const sendQuote = async (quoteId) => {
+  const response = await axios.post(`${API_URL}/quotes/${quoteId}/send`);
+  return response.data;
+};
+
+// Customer Quote Access (No Auth)
+export const getCustomerQuote = async (quoteId, token) => {
+  const response = await axios.get(`${API_URL}/customer/quote/${quoteId}?token=${token}`);
+  return response.data;
+};
+
+export const uploadIdDocument = async (quoteId, token, docType, file) => {
+  const formData = new FormData();
+  formData.append("token", token);
+  formData.append("doc_type", docType);
+  formData.append("file", file);
+  
+  const response = await axios.post(`${API_URL}/customer/quote/${quoteId}/upload-id`, formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
+  return response.data;
+};
+
+export const signQuote = async (quoteId, token, signatureData, agreedToTerms) => {
+  const formData = new FormData();
+  formData.append("token", token);
+  formData.append("signature_data", signatureData);
+  formData.append("agreed_to_terms", agreedToTerms);
+  
+  const response = await axios.post(`${API_URL}/customer/quote/${quoteId}/sign`, formData);
+  return response.data;
+};

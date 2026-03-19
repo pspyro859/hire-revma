@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { getInquiries, updateInquiryStatus, getMachines } from "../lib/api";
 import { Button } from "../components/ui/button";
@@ -15,10 +16,12 @@ import {
   ChevronUp,
   Check,
   X,
-  Clock
+  Clock,
+  FileText
 } from "lucide-react";
 
 export default function InquiriesPage() {
+  const navigate = useNavigate();
   const [inquiries, setInquiries] = useState([]);
   const [machines, setMachines] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -269,6 +272,15 @@ export default function InquiriesPage() {
                       </div>
 
                       <div className="ml-auto flex gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-[#E63946] hover:bg-[#c62836] text-white"
+                          onClick={() => navigate("/quotes/new", { state: { inquiry } })}
+                          data-testid="create-quote-btn"
+                        >
+                          <FileText className="w-4 h-4 mr-1" />
+                          Create Quote
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"

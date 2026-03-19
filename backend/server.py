@@ -46,9 +46,13 @@ UPLOAD_DIR = ROOT_DIR / "uploads"
 PHOTOS_DIR = UPLOAD_DIR / "photos"
 SIGNATURES_DIR = UPLOAD_DIR / "signatures"
 PDFS_DIR = UPLOAD_DIR / "pdfs"
+ID_DOCS_DIR = UPLOAD_DIR / "id_documents"
 
-for directory in [UPLOAD_DIR, PHOTOS_DIR, SIGNATURES_DIR, PDFS_DIR]:
+for directory in [UPLOAD_DIR, PHOTOS_DIR, SIGNATURES_DIR, PDFS_DIR, ID_DOCS_DIR]:
     directory.mkdir(exist_ok=True)
+
+# Frontend URL for customer links
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://dry-hire-pro.preview.emergentagent.com')
 
 # Create the main app
 app = FastAPI(title="Revma Heavy Equipment Hire API")
@@ -240,6 +244,63 @@ class TermsConditionsCreate(BaseModel):
     order: int
     is_active: bool = True
 
+# ======================== QUOTE MODELS ========================
+
+class QuoteLineItem(BaseModel):
+    machine_id: str
+    machine_name: str
+    rate_type: str  # daily, weekly, monthly
+    rate: float
+    quantity: int = 1
+    subtotal: float
+
+class QuoteCreate(BaseModel):
+    inquiry_id: str
+    customer_email: str
+    customer_name: str
+    customer_phone: str
+    line_items: List[QuoteLineItem]
+    hire_start_date: str
+    hire_end_date: str
+    delivery_method: str
+    delivery_address: Optional[str] = None
+    delivery_fee: float = 0
+    notes: Optional[str] = None
+    valid_until: str  # Quote expiry date
+
+class QuoteResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    quote_number: str
+    inquiry_id: str
+    customer_email: str
+    customer_name: str
+    customer_phone: str
+    line_items: List[dict]
+    hire_start_date: str
+    hire_end_date: str
+    delivery_method: str
+    delivery_address: Optional[str] = None
+    delivery_fee: float
+    subtotal: float
+    security_bond: float
+    total: float
+    notes: Optional[str] = None
+    valid_until: str
+    status: str  # draft, sent, accepted, declined, expired
+    access_token: str  # Token for customer to access quote
+    id_documents: List[dict] = []
+    id_verified: bool = False
+    customer_signature: Optional[str] = None
+    signed_at: Optional[str] = None
+    created_at: str
+
+class IDDocument(BaseModel):
+    doc_type: str  # drivers_licence_front, drivers_licence_back, passport, medicare, other
+    points: int  # ID points value
+    filename: str
+    uploaded_at: str
+
 # ======================== AUTH HELPERS ========================
 
 def hash_password(password: str) -> str:
@@ -381,6 +442,153 @@ async def send_inquiry_notification(inquiry: dict):
     
     subject = f"New Hire Enquiry: {inquiry.get('first_name', '')} {inquiry.get('last_name', '')} - {equipment_list}"
     await send_email(NOTIFICATION_EMAIL, subject, html_content)
+
+async def send_quote_to_customer(quote: dict):
+    """Send quote email to customer with link to view, upload ID, and sign"""
+    customer_email = quote.get('customer_email', '')
+    if not customer_email:
+        return
+    
+    quote_url = f"{FRONTEND_URL}/quote/{quote.get('id')}?token={quote.get('access_token')}"
+    
+    # Format line items
+    items_html = ""
+    for item in quote.get('line_items', []):
+        items_html += f"""
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">{item.get('machine_name', '')}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">{item.get('rate_type', '').capitalize()}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.get('rate', 0):.2f}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.get('subtotal', 0):.2f}</td>
+        </tr>
+        """
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }}
+            .container {{ max-width: 600px; margin: 0 auto; }}
+            .header {{ background-color: #1A1D23; color: white; padding: 30px; text-align: center; }}
+            .header img {{ max-height: 60px; }}
+            .header h1 {{ margin: 10px 0 0 0; color: #E63946; font-size: 24px; }}
+            .content {{ padding: 30px; background-color: #ffffff; }}
+            .quote-box {{ background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; }}
+            .quote-number {{ color: #E63946; font-size: 18px; font-weight: bold; }}
+            table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+            th {{ background-color: #1A1D23; color: white; padding: 12px; text-align: left; }}
+            .totals {{ background-color: #f8f9fa; }}
+            .totals td {{ padding: 10px; font-weight: bold; }}
+            .total-row {{ background-color: #E63946; color: white; }}
+            .cta {{ display: inline-block; background-color: #E63946; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 10px 5px; }}
+            .cta-secondary {{ background-color: #1A1D23; }}
+            .steps {{ margin: 30px 0; }}
+            .step {{ display: flex; align-items: flex-start; margin: 15px 0; }}
+            .step-number {{ background-color: #E63946; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0; }}
+            .footer {{ background-color: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 12px; }}
+            .id-notice {{ background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <img src="https://www.revma.com.au/assets/images/revma-logo.jpg" alt="Revma Logo" />
+                <h1>YOUR EQUIPMENT HIRE QUOTE</h1>
+            </div>
+            <div class="content">
+                <p>Hi {quote.get('customer_name', '').split()[0] if quote.get('customer_name') else 'there'},</p>
+                <p>Thank you for your equipment hire enquiry. Please find your quote below:</p>
+                
+                <div class="quote-box">
+                    <span class="quote-number">Quote #{quote.get('quote_number', '')}</span>
+                    <p style="margin: 5px 0; color: #666;">Valid until: {quote.get('valid_until', '')}</p>
+                </div>
+                
+                <h3>Hire Details</h3>
+                <p><strong>Hire Period:</strong> {quote.get('hire_start_date', '')} to {quote.get('hire_end_date', '')}</p>
+                <p><strong>Collection:</strong> {quote.get('delivery_method', '').capitalize()}</p>
+                {f"<p><strong>Delivery Address:</strong> {quote.get('delivery_address', '')}</p>" if quote.get('delivery_address') else ""}
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Equipment</th>
+                            <th style="text-align: center;">Rate</th>
+                            <th style="text-align: right;">Price</th>
+                            <th style="text-align: right;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {items_html}
+                    </tbody>
+                    <tfoot class="totals">
+                        <tr>
+                            <td colspan="3" style="text-align: right; padding: 10px;">Subtotal:</td>
+                            <td style="text-align: right; padding: 10px;">${quote.get('subtotal', 0):.2f}</td>
+                        </tr>
+                        {f'<tr><td colspan="3" style="text-align: right; padding: 10px;">Delivery Fee:</td><td style="text-align: right; padding: 10px;">${quote.get("delivery_fee", 0):.2f}</td></tr>' if quote.get('delivery_fee', 0) > 0 else ''}
+                        <tr>
+                            <td colspan="3" style="text-align: right; padding: 10px;">Security Bond (refundable):</td>
+                            <td style="text-align: right; padding: 10px;">${quote.get('security_bond', 0):.2f}</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td colspan="3" style="text-align: right; padding: 12px;">TOTAL:</td>
+                            <td style="text-align: right; padding: 12px; font-size: 18px;">${quote.get('total', 0):.2f}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                
+                {f"<p><strong>Notes:</strong> {quote.get('notes', '')}</p>" if quote.get('notes') else ""}
+                
+                <div class="id-notice">
+                    <strong>📋 100 Points of ID Required</strong>
+                    <p style="margin: 5px 0 0 0; font-size: 14px;">To proceed with your hire, you'll need to upload identification documents (e.g., Driver's Licence + Medicare Card or Passport).</p>
+                </div>
+                
+                <div class="steps">
+                    <h3>To Accept This Quote:</h3>
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div>
+                            <strong>Review Quote</strong>
+                            <p style="margin: 5px 0; color: #666;">Check the equipment, dates, and pricing</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>
+                            <strong>Upload ID Documents</strong>
+                            <p style="margin: 5px 0; color: #666;">Provide 100 points of identification</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>
+                            <strong>Read & Sign Agreement</strong>
+                            <p style="margin: 5px 0; color: #666;">Review terms and sign digitally</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <p style="text-align: center; margin: 30px 0;">
+                    <a href="{quote_url}" class="cta">View Quote & Accept</a>
+                </p>
+                
+                <p style="color: #666; font-size: 14px;">If you have any questions, please call us on <a href="tel:0448473862" style="color: #E63946;">0448 473 862</a> or reply to this email.</p>
+            </div>
+            <div class="footer">
+                <p>Revma Pty Ltd | ABN: 37 121 035 710</p>
+                <p>Unit 9/12 Channel Road, Mayfield West NSW 2304</p>
+                <p>Phone: 0448 473 862 | Email: office@revma.com.au</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    subject = f"Your Equipment Hire Quote #{quote.get('quote_number', '')} - Revma Pty Ltd"
+    await send_email(customer_email, subject, html_content)
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
@@ -758,6 +966,246 @@ async def update_inquiry_status(inquiry_id: str, status: str, current_user: dict
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Inquiry not found")
     return {"success": True}
+
+# ======================== QUOTE ROUTES ========================
+
+def generate_quote_number():
+    now = datetime.now(timezone.utc)
+    return f"Q-{now.strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
+
+def generate_access_token():
+    """Generate a secure token for customer quote access"""
+    return str(uuid.uuid4()).replace('-', '') + str(uuid.uuid4()).replace('-', '')[:16]
+
+# ID Points values for Australian 100-point check
+ID_POINTS = {
+    "drivers_licence": 40,
+    "passport": 70,
+    "birth_certificate": 70,
+    "citizenship_certificate": 70,
+    "medicare": 25,
+    "credit_card": 25,
+    "utility_bill": 25,
+    "bank_statement": 25,
+    "other": 10
+}
+
+@api_router.post("/quotes", response_model=QuoteResponse)
+async def create_quote(quote_data: QuoteCreate, background_tasks: BackgroundTasks, current_user: dict = Depends(require_staff)):
+    """Create a quote from an inquiry and optionally send to customer"""
+    
+    # Calculate totals
+    subtotal = sum(item.subtotal for item in quote_data.line_items)
+    
+    # Calculate security bond (sum of all machine bonds)
+    security_bond = 0
+    for item in quote_data.line_items:
+        machine = await db.machines.find_one({"id": item.machine_id}, {"_id": 0})
+        if machine:
+            security_bond += machine.get("security_bond", 0)
+    
+    total = subtotal + quote_data.delivery_fee + security_bond
+    
+    quote_id = str(uuid.uuid4())
+    access_token = generate_access_token()
+    
+    quote_doc = {
+        "id": quote_id,
+        "quote_number": generate_quote_number(),
+        "inquiry_id": quote_data.inquiry_id,
+        "customer_email": quote_data.customer_email,
+        "customer_name": quote_data.customer_name,
+        "customer_phone": quote_data.customer_phone,
+        "line_items": [item.model_dump() for item in quote_data.line_items],
+        "hire_start_date": quote_data.hire_start_date,
+        "hire_end_date": quote_data.hire_end_date,
+        "delivery_method": quote_data.delivery_method,
+        "delivery_address": quote_data.delivery_address,
+        "delivery_fee": quote_data.delivery_fee,
+        "subtotal": subtotal,
+        "security_bond": security_bond,
+        "total": total,
+        "notes": quote_data.notes,
+        "valid_until": quote_data.valid_until,
+        "status": "draft",
+        "access_token": access_token,
+        "id_documents": [],
+        "id_verified": False,
+        "customer_signature": None,
+        "signed_at": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_by": current_user["id"]
+    }
+    
+    await db.quotes.insert_one(quote_doc)
+    
+    # Update inquiry status
+    await db.inquiries.update_one({"id": quote_data.inquiry_id}, {"$set": {"status": "quoted"}})
+    
+    return QuoteResponse(**quote_doc)
+
+@api_router.get("/quotes", response_model=List[QuoteResponse])
+async def get_quotes(status: Optional[str] = None, current_user: dict = Depends(require_staff)):
+    query = {}
+    if status:
+        query["status"] = status
+    
+    quotes = await db.quotes.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return [QuoteResponse(**q) for q in quotes]
+
+@api_router.get("/quotes/{quote_id}", response_model=QuoteResponse)
+async def get_quote(quote_id: str, current_user: dict = Depends(require_staff)):
+    quote = await db.quotes.find_one({"id": quote_id}, {"_id": 0})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    return QuoteResponse(**quote)
+
+@api_router.post("/quotes/{quote_id}/send")
+async def send_quote(quote_id: str, background_tasks: BackgroundTasks, current_user: dict = Depends(require_staff)):
+    """Send quote email to customer"""
+    quote = await db.quotes.find_one({"id": quote_id}, {"_id": 0})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    
+    # Update status to sent
+    await db.quotes.update_one({"id": quote_id}, {"$set": {"status": "sent"}})
+    quote["status"] = "sent"
+    
+    # Send email in background
+    background_tasks.add_task(send_quote_to_customer, quote)
+    
+    return {"success": True, "message": "Quote sent to customer"}
+
+# ======================== CUSTOMER QUOTE ACCESS (No Auth Required) ========================
+
+@api_router.get("/customer/quote/{quote_id}")
+async def get_quote_for_customer(quote_id: str, token: str):
+    """Get quote details for customer (requires access token)"""
+    quote = await db.quotes.find_one({"id": quote_id, "access_token": token}, {"_id": 0})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found or invalid token")
+    
+    # Get terms and conditions
+    terms = await db.terms.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(100)
+    
+    # Calculate ID points
+    total_points = sum(doc.get("points", 0) for doc in quote.get("id_documents", []))
+    
+    return {
+        "quote": quote,
+        "terms": terms,
+        "id_points_total": total_points,
+        "id_points_required": 100
+    }
+
+@api_router.post("/customer/quote/{quote_id}/upload-id")
+async def upload_id_document(
+    quote_id: str,
+    token: str = Form(...),
+    doc_type: str = Form(...),
+    file: UploadFile = File(...)
+):
+    """Upload ID document for quote (customer access)"""
+    quote = await db.quotes.find_one({"id": quote_id, "access_token": token}, {"_id": 0})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found or invalid token")
+    
+    if quote.get("status") not in ["sent", "accepted"]:
+        raise HTTPException(status_code=400, detail="Quote is not available for ID upload")
+    
+    # Get points for this document type
+    points = ID_POINTS.get(doc_type, 10)
+    
+    # Save the file
+    filename = f"{quote_id}_{doc_type}_{uuid.uuid4().hex[:8]}.jpg"
+    file_path = ID_DOCS_DIR / filename
+    
+    async with aiofiles.open(file_path, 'wb') as f:
+        content = await file.read()
+        await f.write(content)
+    
+    # Update quote with new ID document
+    id_doc = {
+        "doc_type": doc_type,
+        "points": points,
+        "filename": filename,
+        "uploaded_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    id_documents = quote.get("id_documents", [])
+    # Replace existing document of same type
+    id_documents = [d for d in id_documents if d.get("doc_type") != doc_type]
+    id_documents.append(id_doc)
+    
+    # Calculate total points
+    total_points = sum(doc.get("points", 0) for doc in id_documents)
+    id_verified = total_points >= 100
+    
+    await db.quotes.update_one(
+        {"id": quote_id},
+        {"$set": {"id_documents": id_documents, "id_verified": id_verified}}
+    )
+    
+    return {
+        "success": True,
+        "filename": filename,
+        "points": points,
+        "total_points": total_points,
+        "id_verified": id_verified
+    }
+
+@api_router.get("/id-documents/{filename}")
+async def get_id_document(filename: str, current_user: dict = Depends(require_staff)):
+    """Get ID document (staff only)"""
+    file_path = ID_DOCS_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Document not found")
+    return FileResponse(file_path)
+
+@api_router.post("/customer/quote/{quote_id}/sign")
+async def sign_quote(
+    quote_id: str,
+    token: str = Form(...),
+    signature_data: str = Form(...),
+    agreed_to_terms: bool = Form(...)
+):
+    """Customer signs the quote/agreement"""
+    quote = await db.quotes.find_one({"id": quote_id, "access_token": token}, {"_id": 0})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found or invalid token")
+    
+    if not agreed_to_terms:
+        raise HTTPException(status_code=400, detail="You must agree to the terms and conditions")
+    
+    if not quote.get("id_verified"):
+        raise HTTPException(status_code=400, detail="Please upload 100 points of ID before signing")
+    
+    # Save signature
+    sig_filename = f"{quote_id}_customer_{uuid.uuid4().hex[:8]}.png"
+    sig_path = SIGNATURES_DIR / sig_filename
+    
+    try:
+        sig_data = signature_data.split(",")[1] if "," in signature_data else signature_data
+        sig_bytes = base64.b64decode(sig_data)
+        async with aiofiles.open(sig_path, 'wb') as f:
+            await f.write(sig_bytes)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid signature data: {str(e)}")
+    
+    # Update quote
+    await db.quotes.update_one(
+        {"id": quote_id},
+        {"$set": {
+            "customer_signature": sig_filename,
+            "signed_at": datetime.now(timezone.utc).isoformat(),
+            "status": "accepted"
+        }}
+    )
+    
+    # Send notification to staff
+    # (Could add email notification here)
+    
+    return {"success": True, "message": "Agreement signed successfully"}
 
 # ======================== TERMS & CONDITIONS ROUTES ========================
 

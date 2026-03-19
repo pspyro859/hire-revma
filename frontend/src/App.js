@@ -13,6 +13,9 @@ import AgreementDetailPage from "./pages/AgreementDetailPage";
 import InquiriesPage from "./pages/InquiriesPage";
 import SettingsPage from "./pages/SettingsPage";
 import CustomerInquiryPage from "./pages/CustomerInquiryPage";
+import QuotesPage from "./pages/QuotesPage";
+import CreateQuotePage from "./pages/CreateQuotePage";
+import CustomerQuotePage from "./pages/CustomerQuotePage";
 
 import "@/App.css";
 
@@ -69,6 +72,7 @@ function AppRoutes() {
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
       <Route path="/inquiry" element={<CustomerInquiryPage />} />
+      <Route path="/quote/:quoteId" element={<CustomerQuotePage />} />
       
       {/* Protected Routes */}
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
@@ -78,6 +82,8 @@ function AppRoutes() {
       
       {/* Staff/Admin Only Routes */}
       <Route path="/inquiries" element={<ProtectedRoute roles={["staff", "admin"]}><InquiriesPage /></ProtectedRoute>} />
+      <Route path="/quotes" element={<ProtectedRoute roles={["staff", "admin"]}><QuotesPage /></ProtectedRoute>} />
+      <Route path="/quotes/new" element={<ProtectedRoute roles={["staff", "admin"]}><CreateQuotePage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute roles={["admin"]}><SettingsPage /></ProtectedRoute>} />
       
       {/* Catch all */}

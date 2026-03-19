@@ -10,7 +10,8 @@ import {
   Menu, 
   X,
   User,
-  Plus
+  Plus,
+  Receipt
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -28,6 +29,7 @@ export default function Layout({ children }) {
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["customer", "staff", "admin"] },
     { path: "/machines", label: "Equipment", icon: Truck, roles: ["customer", "staff", "admin"] },
     { path: "/inquiries", label: "Inquiries", icon: MessageSquare, roles: ["staff", "admin"] },
+    { path: "/quotes", label: "Quotes", icon: Receipt, roles: ["staff", "admin"] },
     { path: "/settings", label: "Settings", icon: Settings, roles: ["admin"] },
   ];
   
