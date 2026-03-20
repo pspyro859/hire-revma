@@ -1,0 +1,161 @@
+{
+  "identity": {
+    "name": "E1 - The Anti-AI Designer",
+    "mission": "Create a rugged, high-contrast, industrial interface that prioritizes safety, clarity, and speed. Avoid the soft, rounded 'SaaS' look. Think 'Caterpillar' or 'DeWalt' meets modern digital design.",
+    "principles": [
+      "Safety First: High contrast for outdoor readability.",
+      "Tactile Utility: UI elements should feel like physical switches and buttons.",
+      "Data Density: Managers need density; Operators need clarity.",
+      "Industrial Aesthetics: Use hazard stripes, stencil fonts, and raw textures."
+    ]
+  },
+  "typography": {
+    "headings": {
+      "family": "Barlow Condensed, sans-serif",
+      "weights": ["600", "700", "800"],
+      "usage": "All page titles, card headers, and major metrics.",
+      "import": "@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&display=swap');"
+    },
+    "body": {
+      "family": "Inter, sans-serif",
+      "weights": ["400", "500", "600"],
+      "usage": "General text, descriptions, and instructions."
+    },
+    "mono": {
+      "family": "JetBrains Mono, monospace",
+      "weights": ["400"],
+      "usage": "Serial numbers, asset IDs, sensor readings, QR codes.",
+      "import": "@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap');"
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "DEFAULT": "#F59E0B",
+        "foreground": "#111827",
+        "description": "Safety Yellow/Amber. Use for primary actions, active states, and focus rings."
+      },
+      "secondary": {
+        "DEFAULT": "#1F2937",
+        "foreground": "#F9FAFB",
+        "description": "Dark Grey/Gunmetal. Use for secondary buttons, dark mode surfaces."
+      },
+      "background": "#F9FAFB",
+      "foreground": "#111827",
+      "card": "#FFFFFF",
+      "card_foreground": "#111827",
+      "border": "#E5E7EB",
+      "danger": "#EF4444",
+      "success": "#10B981",
+      "warning": "#F59E0B"
+    },
+    "usage_rules": [
+      "CRITICAL: No gradients on buttons. Flat, high-visibility colors.",
+      "CRITICAL: Text on 'Safety Yellow' must be BLACK (#111827), not white.",
+      "Use 'Danger Red' sparingly only for critical failures or 'Do Not Operate' flags."
+    ]
+  },
+  "visual_enhancers": {
+    "textures": [
+      {
+        "name": "Hazard Striping",
+        "css": "background-image: repeating-linear-gradient(45deg, #000 25%, transparent 25%, transparent 50%, #000 50%, #000 75%, transparent 75%, transparent); background-size: 10px 10px; opacity: 0.05;",
+        "usage": "Use as a subtle overlay on 'Danger' zones or inactive equipment cards."
+      },
+      {
+        "name": "Subtle Noise",
+        "css": "background-image: url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E\");",
+        "usage": "Apply to dark backgrounds to reduce digital flatness."
+      }
+    ],
+    "borders": "1px solid #E5E7EB. On hover, darken to #9CA3AF. No soft shadows; use hard shadows if needed.",
+    "shadows": "shadow-none or shadow-sm. Avoid large diffuse shadows. We want a flat, technical look."
+  },
+  "layout": {
+    "spacing_scale": "Tailwind default, but lean towards 'comfortable' (p-4, p-6) for desktop and 'touch-friendly' (p-4) for mobile.",
+    "grid_system": {
+      "dashboard": "Bento Grid: Mixed spans. Key metrics (4 cols), Recent Activity (2 cols), Map/Status (2 cols).",
+      "mobile": "Single column (stack). Full width cards."
+    },
+    "containers": "Max-width 1400px. Centered. Padding-x 4 or 6."
+  },
+  "components": {
+    "buttons": {
+      "style": "Rectangular, no rounded corners (rounded-none or rounded-sm). Uppercase text. Tracking-wide.",
+      "hover": "translate-y-[-1px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] (Hard shadow effect).",
+      "mobile": "Min-height 48px for touch targets."
+    },
+    "cards": {
+      "style": "Border-l-4 border-l-primary (accent strip). White background. Thin grey border elsewhere.",
+      "header": "Flex row, justified between. Heading in Barlow Condensed."
+    },
+    "checklist_items": {
+      "style": "Large row. Text on left. Toggle/Status on right. clear separation lines.",
+      "interaction": "Tap anywhere on the row to toggle. distinct 'Passed' (Green) vs 'Failed' (Red) states."
+    },
+    "qr_display": {
+      "style": "High contrast. White background with clear black quiet zone. Centered.",
+      "print_view": "Minimal ink usage. Black and white only. Clear bold text for Asset ID."
+    }
+  },
+  "image_urls": {
+    "hero_equipment": {
+      "url": "https://images.unsplash.com/photo-1763624578810-5ac518e4fd4c",
+      "alt": "Yellow excavator on construction site",
+      "usage": "Login screen background, Dashboard hero banner (dimmed)."
+    },
+    "placeholder_equipment": {
+      "url": "https://images.unsplash.com/photo-1698960427532-e4377fe79d99",
+      "alt": "Heavy machinery silhouette",
+      "usage": "Fallback for equipment without photos."
+    }
+  },
+  "icons": {
+    "library": "lucide-react",
+    "recommended": [
+      "Wrench",
+      "ClipboardCheck",
+      "QrCode",
+      "AlertTriangle",
+      "Fuel",
+      "Gauge",
+      "HardHat",
+      "CalendarClock"
+    ]
+  },
+  "page_specifics": {
+    "dashboard": {
+      "layout": "Grid of 'Status Cards'. Top row: Total Machines, Due Maintenance (Red), Active Issues. Below: List of recent checklists.",
+      "visuals": "Use progress bars for 'Fleet Health'. Color code: Green (>90%), Yellow (70-90%), Red (<70%)."
+    },
+    "machine_detail": {
+      "layout": "Two column. Left: Image + Specs + QR. Right: Maintenance History + Checklist Log.",
+      "mobile": "Stack. Image top. Big 'Start Checklist' button fixed at bottom."
+    },
+    "qr_landing_public": {
+      "layout": "Mobile-first. Extremely simple. 1. Machine Name/Photo. 2. Status (Green/Red). 3. Button: 'Start Pre-start Check'.",
+      "note": "No login required to VIEW basic status, but Login required to SUBMIT check."
+    },
+    "checklist_form": {
+      "layout": "Stepper or long scroll. Group items by category (e.g., 'Fluids', 'Safety', 'Damage').",
+      "input": "Yes/No/NA toggles. Photo upload button for 'Failed' items (require photo if failed)."
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. INSTALL FONTS: Add the Google Fonts imports for Barlow Condensed and JetBrains Mono to index.css.",
+    "2. SETUP TAILWIND: Update tailwind.config.js to use the 'Safety' color palette and fonts.",
+    "3. MOBILE FIRST: Design the Checklist and QR views for mobile screens (375px width) first.",
+    "4. PRINT STYLES: Add a '@media print' block to the CSS. Hide navbars/sidebars. Ensure QR codes print crisp black on white.",
+    "5. DATA-TESTID: Add data-testid to all inputs and buttons (e.g., 'submit-checklist-btn', 'machine-card-123').",
+    "6. SHADCN: Use standard Shadcn components but override the rounded corners to be 'rounded-sm' or 'rounded-none' for that industrial look."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Avoid generic 'SaaS' rounded corners. Make it look tough.",
+    "Dark colors look good when used independently without gradients.",
+    "Use glass-morphism effects ONLY for sticky headers, not for data cards.",
+    "Every interaction needs micro-animations - hover states, transitions.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Subtle grain textures, noise overlays, custom cursors.",
+    "Main agent relies on these image URLs. Missing categories = main agent will use placeholder text which is FORBIDDEN"
+  ]
+}
