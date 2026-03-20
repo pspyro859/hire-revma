@@ -22,7 +22,15 @@ import {
   Eye,
   Printer,
   ArrowLeft,
-  Settings
+  Settings,
+  FileText,
+  Download,
+  Search,
+  Shield,
+  BookOpen,
+  AlertCircle,
+  FileCheck,
+  Users
 } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -73,6 +81,10 @@ const Navigation = () => {
               <Truck className="w-4 h-4" />
               <span className="font-semibold uppercase text-sm tracking-wider">Machines</span>
             </Link>
+            <Link to="/hires" className="flex items-center gap-2 hover:text-primary transition-colors" data-testid="nav-hires">
+              <Users className="w-4 h-4" />
+              <span className="font-semibold uppercase text-sm tracking-wider">Hires</span>
+            </Link>
             <Link to="/checklists" className="flex items-center gap-2 hover:text-primary transition-colors" data-testid="nav-checklists">
               <ClipboardCheck className="w-4 h-4" />
               <span className="font-semibold uppercase text-sm tracking-wider">Checklists</span>
@@ -96,8 +108,10 @@ const Navigation = () => {
           <div className="md:hidden border-t border-secondary-foreground/20 py-4 space-y-4">
             <Link to="/" className="block py-2" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
             <Link to="/machines" className="block py-2" onClick={() => setMobileMenuOpen(false)}>Machines</Link>
+            <Link to="/hires" className="block py-2" onClick={() => setMobileMenuOpen(false)}>Hires</Link>
             <Link to="/checklists" className="block py-2" onClick={() => setMobileMenuOpen(false)}>Checklists</Link>
             <Link to="/maintenance" className="block py-2" onClick={() => setMobileMenuOpen(false)}>Maintenance</Link>
+            <Link to="/portal" className="block py-2 text-primary" onClick={() => setMobileMenuOpen(false)}>Customer Portal</Link>
           </div>
         )}
       </div>
@@ -416,7 +430,12 @@ const MachineForm = () => {
     image_url: "",
     hours_operated: 0,
     next_service_hours: 250,
-    notes: ""
+    notes: "",
+    safety_guide_url: "",
+    operators_manual_url: "",
+    risk_assessment_url: "",
+    service_maintenance_url: "",
+    safety_alerts_url: ""
   });
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -618,6 +637,73 @@ const MachineForm = () => {
             placeholder="Additional notes..."
             data-testid="input-notes"
           />
+        </div>
+
+        {/* Document URLs Section */}
+        <div className="border-t border-border pt-6">
+          <h3 className="font-heading text-lg font-bold mb-4 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" />
+            MACHINE DOCUMENTS
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4">Add URLs to documents that will be available to customers</p>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold uppercase tracking-wider mb-2">General Safety Guide URL</label>
+              <input
+                type="url"
+                value={formData.safety_guide_url || ""}
+                onChange={(e) => setFormData({ ...formData, safety_guide_url: e.target.value })}
+                className="w-full px-4 py-3 bg-background border border-input focus:border-primary outline-none"
+                placeholder="https://..."
+                data-testid="input-safety-guide"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold uppercase tracking-wider mb-2">Operators Manual URL</label>
+              <input
+                type="url"
+                value={formData.operators_manual_url || ""}
+                onChange={(e) => setFormData({ ...formData, operators_manual_url: e.target.value })}
+                className="w-full px-4 py-3 bg-background border border-input focus:border-primary outline-none"
+                placeholder="https://..."
+                data-testid="input-operators-manual"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold uppercase tracking-wider mb-2">Risk Assessment URL</label>
+              <input
+                type="url"
+                value={formData.risk_assessment_url || ""}
+                onChange={(e) => setFormData({ ...formData, risk_assessment_url: e.target.value })}
+                className="w-full px-4 py-3 bg-background border border-input focus:border-primary outline-none"
+                placeholder="https://..."
+                data-testid="input-risk-assessment"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold uppercase tracking-wider mb-2">Service Maintenance URL</label>
+              <input
+                type="url"
+                value={formData.service_maintenance_url || ""}
+                onChange={(e) => setFormData({ ...formData, service_maintenance_url: e.target.value })}
+                className="w-full px-4 py-3 bg-background border border-input focus:border-primary outline-none"
+                placeholder="https://..."
+                data-testid="input-service-maintenance"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold uppercase tracking-wider mb-2">Safety Alerts URL</label>
+              <input
+                type="url"
+                value={formData.safety_alerts_url || ""}
+                onChange={(e) => setFormData({ ...formData, safety_alerts_url: e.target.value })}
+                className="w-full px-4 py-3 bg-background border border-input focus:border-primary outline-none"
+                placeholder="https://..."
+                data-testid="input-safety-alerts"
+              />
+            </div>
+          </div>
         </div>
 
         <button
@@ -945,8 +1031,11 @@ const QRScanPage = () => {
     );
   }
 
-  const { machine, last_checklist } = data;
+  const { machine, last_checklist, documents } = data;
   const isServiceDue = machine.hours_operated >= machine.next_service_hours;
+  
+  // Check if any documents exist
+  const hasDocuments = documents && Object.values(documents).some(doc => doc.url);
 
   return (
     <div className="min-h-screen bg-secondary text-secondary-foreground" data-testid="qr-scan-page">
@@ -973,6 +1062,10 @@ const QRScanPage = () => {
               <span className="font-semibold">{machine.make} {machine.model}</span>
             </div>
             <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Serial Number</span>
+              <span className="font-mono text-sm">{machine.serial_number}</span>
+            </div>
+            <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Hours</span>
               <span className="font-mono font-semibold">{machine.hours_operated}h</span>
             </div>
@@ -991,6 +1084,83 @@ const QRScanPage = () => {
             </div>
           )}
         </div>
+
+        {/* Documents Section */}
+        {hasDocuments && (
+          <div className="bg-card text-card-foreground p-6 mb-6" data-testid="documents-section">
+            <h3 className="font-heading text-lg mb-4 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              DOCUMENTS
+            </h3>
+            <div className="space-y-2">
+              {documents.safety_guide?.url && (
+                <a 
+                  href={documents.safety_guide.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-muted transition-colors"
+                  data-testid="doc-safety-guide"
+                >
+                  <Shield className="w-5 h-5 text-blue-500" />
+                  <span className="flex-1">General Safety Guide</span>
+                  <Download className="w-4 h-4 text-muted-foreground" />
+                </a>
+              )}
+              {documents.operators_manual?.url && (
+                <a 
+                  href={documents.operators_manual.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-muted transition-colors"
+                  data-testid="doc-operators-manual"
+                >
+                  <BookOpen className="w-5 h-5 text-emerald-500" />
+                  <span className="flex-1">Operators Manual</span>
+                  <Download className="w-4 h-4 text-muted-foreground" />
+                </a>
+              )}
+              {documents.risk_assessment?.url && (
+                <a 
+                  href={documents.risk_assessment.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-muted transition-colors"
+                  data-testid="doc-risk-assessment"
+                >
+                  <AlertCircle className="w-5 h-5 text-amber-500" />
+                  <span className="flex-1">Risk Assessment</span>
+                  <Download className="w-4 h-4 text-muted-foreground" />
+                </a>
+              )}
+              {documents.service_maintenance?.url && (
+                <a 
+                  href={documents.service_maintenance.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-muted transition-colors"
+                  data-testid="doc-service-maintenance"
+                >
+                  <FileCheck className="w-5 h-5 text-purple-500" />
+                  <span className="flex-1">Service Maintenance</span>
+                  <Download className="w-4 h-4 text-muted-foreground" />
+                </a>
+              )}
+              {documents.safety_alerts?.url && (
+                <a 
+                  href={documents.safety_alerts.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-muted transition-colors"
+                  data-testid="doc-safety-alerts"
+                >
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                  <span className="flex-1">Safety Alerts</span>
+                  <Download className="w-4 h-4 text-muted-foreground" />
+                </a>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Last Checklist */}
         {last_checklist && (
@@ -1023,6 +1193,17 @@ const QRScanPage = () => {
         <p className="text-center text-sm text-muted-foreground mt-4">
           Complete the pre-start checklist before operating this machine
         </p>
+        
+        {/* Customer Portal Link */}
+        <div className="text-center mt-8 pt-6 border-t border-secondary-foreground/20">
+          <Link 
+            to="/portal" 
+            className="text-primary hover:underline text-sm"
+            data-testid="customer-portal-link"
+          >
+            Looking up a hire contract? Visit Customer Portal
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -1889,6 +2070,532 @@ const MaintenanceDetail = () => {
   );
 };
 
+// Hires List Page
+const HiresList = () => {
+  const [hires, setHires] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("active");
+
+  useEffect(() => {
+    const fetchHires = async () => {
+      try {
+        const params = filter !== "all" ? `?status=${filter}` : "";
+        const res = await axios.get(`${API}/hire-contracts${params}`);
+        setHires(res.data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHires();
+  }, [filter]);
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8" data-testid="hires-list">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <h1 className="font-heading text-3xl md:text-4xl font-bold">HIRE CONTRACTS</h1>
+        <div className="flex gap-2">
+          {["all", "active", "completed"].map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilter(status)}
+              className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                filter === status 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+              data-testid={`filter-hire-${status}`}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <Link 
+          to="/hires/new"
+          className="btn-industrial bg-primary text-primary-foreground px-6 py-3 inline-flex items-center gap-2"
+          data-testid="add-hire-link"
+        >
+          <Plus className="w-5 h-5" />
+          NEW HIRE CONTRACT
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12">
+          <Gauge className="w-12 h-12 mx-auto animate-spin text-primary" />
+        </div>
+      ) : hires.length === 0 ? (
+        <div className="text-center py-12 bg-muted">
+          <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+          <p className="font-heading text-xl">NO HIRE CONTRACTS FOUND</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {hires.map((hire) => (
+            <div
+              key={hire.id}
+              className="bg-card border border-border p-4 card-accent"
+              data-testid={`hire-row-${hire.id}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 flex items-center justify-center ${hire.status === 'active' ? 'bg-emerald-500' : 'bg-gray-400'} text-white`}>
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="font-heading text-lg font-bold">{hire.customer_name}</p>
+                    <p className="text-sm text-muted-foreground font-mono">{hire.contract_number}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">{hire.machine_name}</p>
+                  <p className="text-sm text-muted-foreground">{hire.asset_id}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Start:</span> {new Date(hire.hire_start).toLocaleDateString()}
+                  {hire.hire_end && (
+                    <span className="ml-4"><span className="text-muted-foreground">End:</span> {new Date(hire.hire_end).toLocaleDateString()}</span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Link
+                    to={`/machines/${hire.machine_id}`}
+                    className="btn-industrial bg-secondary text-secondary-foreground px-4 py-2 text-sm"
+                  >
+                    VIEW MACHINE
+                  </Link>
+                  {hire.status === 'active' && (
+                    <button
+                      onClick={async () => {
+                        if (window.confirm('Complete this hire contract?')) {
+                          await axios.put(`${API}/hire-contracts/${hire.id}/complete`);
+                          setHires(hires.map(h => h.id === hire.id ? { ...h, status: 'completed' } : h));
+                        }
+                      }}
+                      className="btn-industrial bg-emerald-500 text-white px-4 py-2 text-sm"
+                      data-testid={`complete-hire-${hire.id}`}
+                    >
+                      COMPLETE
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Hire Contract Form
+const HireForm = () => {
+  const navigate = useNavigate();
+  const [machines, setMachines] = useState([]);
+  const [formData, setFormData] = useState({
+    contract_number: "",
+    customer_name: "",
+    customer_email: "",
+    customer_phone: "",
+    machine_id: "",
+    hire_start: new Date().toISOString().split('T')[0],
+    hire_end: "",
+    notes: ""
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    axios.get(`${API}/machines?status=available`)
+      .then(res => setMachines(res.data))
+      .catch(err => console.error(err));
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await axios.post(`${API}/hire-contracts`, formData);
+      navigate("/hires");
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.detail || "Error creating hire contract");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8" data-testid="hire-form">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6">
+        <ArrowLeft className="w-4 h-4" />
+        Back
+      </button>
+
+      <h1 className="font-heading text-3xl font-bold mb-8">NEW HIRE CONTRACT</h1>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold uppercase tracking-wider mb-2">Contract Number *</label>
+            <input
+              type="text"
+              required
+              value={formData.contract_number}
+              onChange={(e) => setFormData({ ...formData, contract_number: e.target.value })}
+              className="w-full px-4 py-3 bg-background border border-input focus:border-primary outline-none font-mono"
+              placeholder="e.g., HC-2024-001"
+              data-testid="input-contract-number"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold uppercase tracking-wider mb-2">Machine *</label>
+            <select
+              required
+              value={formData.machine_id}
+              onChange={(e) => setFormData({ ...formData, machine_id: e.target.value })}
+              className="w-full px-4 py-3 bg-background border border-input focus:border-primary outline-none"
+              data-testid="select-hire-machine"
+            >
+              <option value="">Select available machine</option>
+              {machines.map(m => (
+                <option key={m.id} value={m.id}>{m.name} ({m.asset_id})</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold uppercase tracking-wider mb-2">Customer Name *</label>
+          <input
+            type="text"
+            required
+            value={formData.customer_name}
+            onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+            className="w-full px-4 py-3 bg-background border border-input focus:border-primary outline-none"
+            placeholder="Customer name"
+            data-testid="input-customer-name"
+          />
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold uppercase tracking-wider mb-2">Customer Email</label>
+            <input
+              type="email"
+              value={formData.customer_email}
+              onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
+              className="w-full px-4 py-3 bg-background border border-input focus:border-primary outline-none"
+              placeholder="email@example.com"
+              data-testid="input-customer-email"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold uppercase tracking-wider mb-2">Customer Phone</label>
+            <input
+              type="tel"
+              value={formData.customer_phone}
+              onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
+              className="w-full px-4 py-3 bg-background border border-input focus:border-primary outline-none"
+              placeholder="Phone number"
+              data-testid="input-customer-phone"
+            />
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold uppercase tracking-wider mb-2">Hire Start Date *</label>
+            <input
+              type="date"
+              required
+              value={formData.hire_start}
+              onChange={(e) => setFormData({ ...formData, hire_start: e.target.value })}
+              className="w-full px-4 py-3 bg-background border border-input focus:border-primary outline-none"
+              data-testid="input-hire-start"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold uppercase tracking-wider mb-2">Expected End Date</label>
+            <input
+              type="date"
+              value={formData.hire_end}
+              onChange={(e) => setFormData({ ...formData, hire_end: e.target.value })}
+              className="w-full px-4 py-3 bg-background border border-input focus:border-primary outline-none"
+              data-testid="input-hire-end"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold uppercase tracking-wider mb-2">Notes</label>
+          <textarea
+            value={formData.notes}
+            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            className="w-full px-4 py-3 bg-background border border-input focus:border-primary outline-none h-24 resize-none"
+            placeholder="Additional notes..."
+            data-testid="input-hire-notes"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={saving}
+          className="w-full btn-industrial bg-primary text-primary-foreground px-6 py-4 font-bold disabled:opacity-50"
+          data-testid="submit-hire"
+        >
+          {saving ? "CREATING..." : "CREATE HIRE CONTRACT"}
+        </button>
+      </form>
+    </div>
+  );
+};
+
+// Customer Portal - Contract Lookup
+const CustomerPortal = () => {
+  const [contractNumber, setContractNumber] = useState("");
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!contractNumber.trim()) return;
+    
+    setLoading(true);
+    setError(null);
+    setData(null);
+    
+    try {
+      const res = await axios.get(`${API}/hire-contracts/lookup/${contractNumber.trim()}`);
+      setData(res.data);
+    } catch (err) {
+      setError(err.response?.status === 404 ? "Contract not found. Please check the contract number." : "Error looking up contract");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-secondary" data-testid="customer-portal">
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-8 text-secondary-foreground">
+          <div className="w-20 h-20 bg-primary mx-auto flex items-center justify-center mb-4">
+            <Search className="w-10 h-10 text-primary-foreground" />
+          </div>
+          <h1 className="font-heading text-3xl font-bold">CUSTOMER PORTAL</h1>
+          <p className="text-muted-foreground mt-2">Enter your contract number to access hire documents</p>
+        </div>
+
+        {/* Search Form */}
+        <form onSubmit={handleSearch} className="bg-card text-card-foreground p-6 mb-6">
+          <label className="block text-sm font-semibold uppercase tracking-wider mb-2">Contract Number</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={contractNumber}
+              onChange={(e) => setContractNumber(e.target.value)}
+              className="flex-1 px-4 py-3 bg-background border border-input focus:border-primary outline-none font-mono"
+              placeholder="e.g., HC-2024-001"
+              data-testid="input-lookup-contract"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-industrial bg-primary text-primary-foreground px-6 py-3 disabled:opacity-50"
+              data-testid="btn-lookup"
+            >
+              {loading ? "..." : "SEARCH"}
+            </button>
+          </div>
+        </form>
+
+        {error && (
+          <div className="bg-red-500/20 border border-red-500 p-4 mb-6 flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+            <span className="text-red-500">{error}</span>
+          </div>
+        )}
+
+        {/* Results */}
+        {data && (
+          <div className="space-y-6">
+            {/* Contract Info */}
+            <div className="bg-card text-card-foreground p-6 card-accent">
+              <div className="flex items-center gap-4 mb-4">
+                <div className={`w-12 h-12 flex items-center justify-center ${data.contract.status === 'active' ? 'bg-emerald-500' : 'bg-gray-400'} text-white`}>
+                  <Check className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="font-heading text-xl font-bold">{data.contract.contract_number}</p>
+                  <p className="text-sm text-muted-foreground uppercase">{data.contract.status}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Customer</span>
+                  <p className="font-semibold">{data.contract.customer_name}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Hire Start</span>
+                  <p className="font-semibold">{new Date(data.contract.hire_start).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Machine Info */}
+            <div className="bg-card text-card-foreground p-6 card-accent">
+              <h3 className="font-heading text-lg font-bold mb-4 flex items-center gap-2">
+                <Truck className="w-5 h-5 text-primary" />
+                MACHINE DETAILS
+              </h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Machine</span>
+                  <p className="font-semibold">{data.machine.name}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Asset ID</span>
+                  <p className="font-mono">{data.machine.asset_id}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Make/Model</span>
+                  <p className="font-semibold">{data.machine.make} {data.machine.model}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Serial Number</span>
+                  <p className="font-mono text-sm">{data.machine.serial_number}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Documents */}
+            {Object.values(data.documents).some(doc => doc.url) && (
+              <div className="bg-card text-card-foreground p-6 card-accent" data-testid="portal-documents">
+                <h3 className="font-heading text-lg font-bold mb-4 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  DOCUMENTS
+                </h3>
+                <div className="space-y-2">
+                  {data.documents.safety_guide?.url && (
+                    <a 
+                      href={data.documents.safety_guide.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <Shield className="w-5 h-5 text-blue-500" />
+                      <span className="flex-1">General Safety Guide</span>
+                      <Download className="w-4 h-4 text-muted-foreground" />
+                    </a>
+                  )}
+                  {data.documents.operators_manual?.url && (
+                    <a 
+                      href={data.documents.operators_manual.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <BookOpen className="w-5 h-5 text-emerald-500" />
+                      <span className="flex-1">Operators Manual</span>
+                      <Download className="w-4 h-4 text-muted-foreground" />
+                    </a>
+                  )}
+                  {data.documents.risk_assessment?.url && (
+                    <a 
+                      href={data.documents.risk_assessment.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <AlertCircle className="w-5 h-5 text-amber-500" />
+                      <span className="flex-1">Risk Assessment</span>
+                      <Download className="w-4 h-4 text-muted-foreground" />
+                    </a>
+                  )}
+                  {data.documents.service_maintenance?.url && (
+                    <a 
+                      href={data.documents.service_maintenance.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <FileCheck className="w-5 h-5 text-purple-500" />
+                      <span className="flex-1">Service Maintenance</span>
+                      <Download className="w-4 h-4 text-muted-foreground" />
+                    </a>
+                  )}
+                  {data.documents.safety_alerts?.url && (
+                    <a 
+                      href={data.documents.safety_alerts.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <AlertTriangle className="w-5 h-5 text-red-500" />
+                      <span className="flex-1">Safety Alerts</span>
+                      <Download className="w-4 h-4 text-muted-foreground" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Pre-start Checklist Link */}
+            <Link
+              to={`/scan/${data.machine.id}`}
+              className="block w-full btn-industrial bg-primary text-primary-foreground px-6 py-5 text-center font-bold text-lg"
+              data-testid="portal-checklist-link"
+            >
+              <ClipboardCheck className="w-6 h-6 inline mr-3" />
+              VIEW MACHINE & START PRE-START CHECK
+            </Link>
+
+            {/* Recent Checklists */}
+            {data.checklists && data.checklists.length > 0 && (
+              <div className="bg-card text-card-foreground p-6 card-accent">
+                <h3 className="font-heading text-lg font-bold mb-4 flex items-center gap-2">
+                  <ClipboardCheck className="w-5 h-5 text-primary" />
+                  RECENT CHECKLISTS
+                </h3>
+                <div className="space-y-2">
+                  {data.checklists.map((check) => (
+                    <div 
+                      key={check.id}
+                      className="flex items-center justify-between p-3 bg-muted/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 flex items-center justify-center ${check.overall_status === 'pass' ? 'bg-emerald-500' : 'bg-red-500'} text-white`}>
+                          {check.overall_status === 'pass' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm">{check.operator_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(check.submitted_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`px-2 py-1 text-xs uppercase ${check.overall_status === 'pass' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        {check.overall_status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 function App() {
   return (
     <div className="App min-h-screen bg-background">
@@ -1900,6 +2607,8 @@ function App() {
           <Route path="/machines/new" element={<MachineForm />} />
           <Route path="/machines/:id" element={<MachineDetail />} />
           <Route path="/machines/:id/edit" element={<MachineForm />} />
+          <Route path="/hires" element={<HiresList />} />
+          <Route path="/hires/new" element={<HireForm />} />
           <Route path="/scan/:id" element={<QRScanPage />} />
           <Route path="/checklist/:machineId" element={<ChecklistForm />} />
           <Route path="/checklists" element={<ChecklistsList />} />
@@ -1907,6 +2616,7 @@ function App() {
           <Route path="/maintenance" element={<MaintenanceList />} />
           <Route path="/maintenance/new" element={<MaintenanceForm />} />
           <Route path="/maintenance/:id" element={<MaintenanceDetail />} />
+          <Route path="/portal" element={<CustomerPortal />} />
         </Routes>
       </BrowserRouter>
     </div>

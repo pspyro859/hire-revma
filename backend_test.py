@@ -26,7 +26,13 @@ class DryHireAPITester:
             "year": 2020,
             "hours_operated": 150,
             "next_service_hours": 250,
-            "notes": "Test machine for API validation"
+            "notes": "Test machine for API validation",
+            # Document URLs for testing
+            "safety_guide_url": "https://example.com/safety-guide.pdf",
+            "operators_manual_url": "https://example.com/operators-manual.pdf",
+            "risk_assessment_url": "https://example.com/risk-assessment.pdf",
+            "service_maintenance_url": "https://example.com/service-maintenance.pdf",
+            "safety_alerts_url": "https://example.com/safety-alerts.pdf"
         }
         
         self.test_checklist_items = [
@@ -35,6 +41,18 @@ class DryHireAPITester:
             {"category": "Fluids", "item": "Engine oil level", "status": "fail", "notes": "Oil level low"},
             {"category": "Visual Inspection", "item": "No visible leaks", "status": "pass", "notes": ""}
         ]
+        
+        # Test hire contract data
+        self.test_hire_contract = {
+            "contract_number": "HC-TEST-001",
+            "customer_name": "John Test Smith",
+            "customer_email": "john.test@example.com",
+            "customer_phone": "+1234567890",
+            "hire_start": "2024-01-15",
+            "hire_end": "2024-03-15",
+            "notes": "Test hire contract"
+        }
+        self.test_hire_contract_id = None
 
     def run_test(self, name, method, endpoint, expected_status, data=None, params=None):
         """Run a single API test"""
@@ -126,12 +144,39 @@ class DryHireAPITester:
             print("⚠️  Skipping - No machine ID available")
             return False
         
-        return self.run_test(
+        success, response = self.run_test(
             "Get Machine QR Info",
             "GET", 
             f"machines/{self.test_machine_id}/qr-info",
             200
         )
+        
+        if success:
+            # Verify QR info structure
+            required_fields = ['machine', 'last_checklist', 'checklist_template', 'documents', 'active_hire']
+            missing_fields = [field for field in required_fields if field not in response]
+            if missing_fields:
+                print(f"   ❌ Missing QR info fields: {missing_fields}")
+                return False
+            
+            # Verify documents structure and URLs
+            documents = response.get('documents', {})
+            expected_docs = ['safety_guide', 'operators_manual', 'risk_assessment', 'service_maintenance', 'safety_alerts']
+            for doc_type in expected_docs:
+                if doc_type not in documents:
+                    print(f"   ❌ Missing document type: {doc_type}")
+                    return False
+                doc_info = documents[doc_type]
+                if 'name' not in doc_info or 'url' not in doc_info:
+                    print(f"   ❌ Invalid document structure for {doc_type}")
+                    return False
+                # Verify our test URLs are returned
+                if doc_info['url'] and not doc_info['url'].startswith('https://example.com/'):
+                    print(f"   ❌ Test document URL not returned for {doc_type}: {doc_info['url']}")
+                    return False
+            
+            print("   ✅ QR info structure and documents verified")
+        return success
 
     def test_checklist_template(self):
         """Test getting checklist template"""
@@ -282,6 +327,92 @@ class DryHireAPITester:
                 print("   ❌ Missing activity data fields")
         return success
 
+    def test_create_hire_contract(self):
+        """Test creating a hire contract"""
+        if not self.test_machine_id:
+            print("⚠️  Skipping - No machine ID available")
+            return False
+        
+        # Add machine_id to hire contract data
+        hire_data = {**self.test_hire_contract, "machine_id": self.test_machine_id}
+        
+        success, response = self.run_test(
+            "Create Hire Contract",
+            "POST",
+            "hire-contracts",
+            200,
+            data=hire_data
+        )
+        if success and 'id' in response:
+            self.test_hire_contract_id = response['id']
+            print(f"   Created hire contract ID: {self.test_hire_contract_id}")
+            print(f"   Contract number: {response.get('contract_number')}")
+            print(f"   Customer: {response.get('customer_name')}")
+            return True
+        return False
+
+    def test_get_hire_contracts(self):
+        """Test getting all hire contracts"""
+        return self.run_test("Get All Hire Contracts", "GET", "hire-contracts", 200)
+
+    def test_get_hire_contracts_filtered(self):
+        """Test getting hire contracts with status filter"""
+        return self.run_test(
+            "Get Active Hire Contracts",
+            "GET",
+            "hire-contracts",
+            200,
+            params={"status": "active"}
+        )
+
+    def test_get_single_hire_contract(self):
+        """Test getting a single hire contract by ID"""
+        if not self.test_hire_contract_id:
+            print("⚠️  Skipping - No hire contract ID available")
+            return False
+            
+        return self.run_test(
+            "Get Single Hire Contract",
+            "GET",
+            f"hire-contracts/{self.test_hire_contract_id}",
+            200
+        )
+
+    def test_customer_portal_lookup(self):
+        """Test customer portal contract lookup"""
+        if not self.test_hire_contract_id:
+            print("⚠️  Skipping - No hire contract ID available")
+            return False
+        
+        success, response = self.run_test(
+            "Customer Portal Lookup",
+            "GET",
+            f"hire-contracts/lookup/{self.test_hire_contract['contract_number']}",
+            200
+        )
+        
+        if success:
+            # Verify lookup response structure
+            required_fields = ['contract', 'machine', 'documents', 'checklists']
+            missing_fields = [field for field in required_fields if field not in response]
+            if missing_fields:
+                print(f"   ❌ Missing lookup fields: {missing_fields}")
+                return False
+            
+            # Verify documents are available in lookup
+            documents = response.get('documents', {})
+            doc_count = sum(1 for doc in documents.values() if doc.get('url'))
+            print(f"   ✅ Found {doc_count} documents in customer portal lookup")
+            
+            # Verify contract details
+            contract = response.get('contract', {})
+            if contract.get('contract_number') != self.test_hire_contract['contract_number']:
+                print(f"   ❌ Contract number mismatch in lookup")
+                return False
+            
+            print("   ✅ Customer portal lookup verified")
+        return success
+
     def test_update_machine(self):
         """Test updating a machine"""
         if not self.test_machine_id:
@@ -290,7 +421,7 @@ class DryHireAPITester:
         
         update_data = {
             "hours_operated": 160.0,
-            "status": "maintenance"
+            "status": "available"  # Set back to available for hire contract creation
         }
         
         return self.run_test(
@@ -301,9 +432,39 @@ class DryHireAPITester:
             data=update_data
         )
 
+    def test_complete_hire_contract(self):
+        """Test completing a hire contract"""
+        if not self.test_hire_contract_id:
+            print("⚠️  Skipping - No hire contract ID available")
+            return False
+        
+        success, response = self.run_test(
+            "Complete Hire Contract",
+            "PUT",
+            f"hire-contracts/{self.test_hire_contract_id}/complete",
+            200
+        )
+        
+        if success:
+            print("   ✅ Hire contract completed successfully")
+        return success
+
     def cleanup_test_data(self):
         """Clean up test data"""
         print("\n🧹 Cleaning up test data...")
+        
+        # Complete hire contract if it exists
+        if self.test_hire_contract_id:
+            try:
+                response = requests.put(f"{self.base_url}/hire-contracts/{self.test_hire_contract_id}/complete")
+                if response.status_code == 200:
+                    print("✅ Test hire contract completed")
+                else:
+                    print(f"⚠️  Could not complete test hire contract: {response.status_code}")
+            except Exception as e:
+                print(f"⚠️  Error completing test hire contract: {e}")
+        
+        # Delete test machine
         if self.test_machine_id:
             try:
                 response = requests.delete(f"{self.base_url}/machines/{self.test_machine_id}")
@@ -328,6 +489,12 @@ class DryHireAPITester:
             self.test_get_machines_with_filter,
             self.test_get_single_machine,
             self.test_machine_qr_info,
+            self.test_update_machine,  # Make machine available for hire
+            self.test_create_hire_contract,
+            self.test_get_hire_contracts,
+            self.test_get_hire_contracts_filtered,
+            self.test_get_single_hire_contract,
+            self.test_customer_portal_lookup,
             self.test_checklist_template,
             self.test_submit_checklist,
             self.test_get_checklists,
@@ -337,7 +504,7 @@ class DryHireAPITester:
             self.test_get_single_maintenance,
             self.test_dashboard_stats,
             self.test_dashboard_activity,
-            self.test_update_machine,
+            self.test_complete_hire_contract,
         ]
 
         # Run tests

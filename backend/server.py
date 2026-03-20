@@ -51,6 +51,14 @@ class MaintenanceType(str, Enum):
 
 # ============== MODELS ==============
 
+# Document Models
+class MachineDocuments(BaseModel):
+    safety_guide_url: Optional[str] = None
+    operators_manual_url: Optional[str] = None
+    risk_assessment_url: Optional[str] = None
+    service_maintenance_url: Optional[str] = None
+    safety_alerts_url: Optional[str] = None
+
 # Machine Models
 class Machine(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -68,6 +76,12 @@ class Machine(BaseModel):
     next_service_hours: float = 250
     last_service_date: Optional[str] = None
     notes: Optional[str] = None
+    # Document URLs
+    safety_guide_url: Optional[str] = None
+    operators_manual_url: Optional[str] = None
+    risk_assessment_url: Optional[str] = None
+    service_maintenance_url: Optional[str] = None
+    safety_alerts_url: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
@@ -83,6 +97,12 @@ class MachineCreate(BaseModel):
     hours_operated: float = 0
     next_service_hours: float = 250
     notes: Optional[str] = None
+    # Document URLs
+    safety_guide_url: Optional[str] = None
+    operators_manual_url: Optional[str] = None
+    risk_assessment_url: Optional[str] = None
+    service_maintenance_url: Optional[str] = None
+    safety_alerts_url: Optional[str] = None
 
 class MachineUpdate(BaseModel):
     name: Optional[str] = None
@@ -94,6 +114,12 @@ class MachineUpdate(BaseModel):
     hours_operated: Optional[float] = None
     next_service_hours: Optional[float] = None
     notes: Optional[str] = None
+    # Document URLs
+    safety_guide_url: Optional[str] = None
+    operators_manual_url: Optional[str] = None
+    risk_assessment_url: Optional[str] = None
+    service_maintenance_url: Optional[str] = None
+    safety_alerts_url: Optional[str] = None
 
 # Checklist Models
 class ChecklistItem(BaseModel):
@@ -171,6 +197,33 @@ class DashboardStats(BaseModel):
     due_for_service: int
     recent_checklists: int
     failed_checklists: int
+
+# Hire Contract Models
+class HireContract(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    contract_number: str
+    customer_name: str
+    customer_email: Optional[str] = None
+    customer_phone: Optional[str] = None
+    machine_id: str
+    machine_name: str
+    asset_id: str
+    hire_start: str
+    hire_end: Optional[str] = None
+    status: str = "active"  # active, completed, cancelled
+    notes: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class HireContractCreate(BaseModel):
+    contract_number: str
+    customer_name: str
+    customer_email: Optional[str] = None
+    customer_phone: Optional[str] = None
+    machine_id: str
+    hire_start: str
+    hire_end: Optional[str] = None
+    notes: Optional[str] = None
 
 # ============== DEFAULT CHECKLIST TEMPLATES ==============
 DEFAULT_CHECKLIST_ITEMS = [
@@ -258,11 +311,143 @@ async def get_machine_qr_info(machine_id: str):
     # Get checklist template items
     checklist_items = DEFAULT_CHECKLIST_ITEMS
     
+    # Get documents
+    documents = {
+        "safety_guide": {"name": "General Safety Guide", "url": machine.get("safety_guide_url")},
+        "operators_manual": {"name": "Operators Manual", "url": machine.get("operators_manual_url")},
+        "risk_assessment": {"name": "Risk Assessment", "url": machine.get("risk_assessment_url")},
+        "service_maintenance": {"name": "Service Maintenance", "url": machine.get("service_maintenance_url")},
+        "safety_alerts": {"name": "Safety Alerts", "url": machine.get("safety_alerts_url")},
+    }
+    
+    # Get active hire contract for this machine
+    active_hire = await db.hire_contracts.find_one(
+        {"machine_id": machine_id, "status": "active"},
+        {"_id": 0}
+    )
+    
     return {
         "machine": machine,
         "last_checklist": last_checklist,
-        "checklist_template": checklist_items
+        "checklist_template": checklist_items,
+        "documents": documents,
+        "active_hire": active_hire
     }
+
+# ============== HIRE CONTRACT ENDPOINTS ==============
+@api_router.post("/hire-contracts", response_model=HireContract)
+async def create_hire_contract(contract_data: HireContractCreate):
+    # Get machine info
+    machine = await db.machines.find_one({"id": contract_data.machine_id}, {"_id": 0})
+    if not machine:
+        raise HTTPException(status_code=404, detail="Machine not found")
+    
+    # Check for existing active contract
+    existing = await db.hire_contracts.find_one({
+        "machine_id": contract_data.machine_id,
+        "status": "active"
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Machine already has an active hire contract")
+    
+    contract = HireContract(
+        contract_number=contract_data.contract_number,
+        customer_name=contract_data.customer_name,
+        customer_email=contract_data.customer_email,
+        customer_phone=contract_data.customer_phone,
+        machine_id=contract_data.machine_id,
+        machine_name=machine["name"],
+        asset_id=machine["asset_id"],
+        hire_start=contract_data.hire_start,
+        hire_end=contract_data.hire_end,
+        notes=contract_data.notes
+    )
+    
+    doc = contract.model_dump()
+    await db.hire_contracts.insert_one(doc)
+    
+    # Update machine status to in_use
+    await db.machines.update_one(
+        {"id": contract_data.machine_id},
+        {"$set": {"status": MachineStatus.IN_USE, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return contract
+
+@api_router.get("/hire-contracts", response_model=List[HireContract])
+async def get_hire_contracts(
+    status: Optional[str] = None,
+    machine_id: Optional[str] = None,
+    limit: int = Query(default=50, le=100)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    if machine_id:
+        query["machine_id"] = machine_id
+    
+    contracts = await db.hire_contracts.find(query, {"_id": 0}).sort("created_at", -1).to_list(limit)
+    return contracts
+
+@api_router.get("/hire-contracts/{contract_id}", response_model=HireContract)
+async def get_hire_contract(contract_id: str):
+    contract = await db.hire_contracts.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="Hire contract not found")
+    return contract
+
+@api_router.get("/hire-contracts/lookup/{contract_number}")
+async def lookup_hire_contract(contract_number: str):
+    """Customer portal lookup by contract number"""
+    contract = await db.hire_contracts.find_one({"contract_number": contract_number}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="Contract not found")
+    
+    # Get machine details
+    machine = await db.machines.find_one({"id": contract["machine_id"]}, {"_id": 0})
+    if not machine:
+        raise HTTPException(status_code=404, detail="Machine not found")
+    
+    # Get documents
+    documents = {
+        "safety_guide": {"name": "General Safety Guide", "url": machine.get("safety_guide_url")},
+        "operators_manual": {"name": "Operators Manual", "url": machine.get("operators_manual_url")},
+        "risk_assessment": {"name": "Risk Assessment", "url": machine.get("risk_assessment_url")},
+        "service_maintenance": {"name": "Service Maintenance", "url": machine.get("service_maintenance_url")},
+        "safety_alerts": {"name": "Safety Alerts", "url": machine.get("safety_alerts_url")},
+    }
+    
+    # Get checklists for this machine during hire period
+    checklists = await db.checklists.find(
+        {"machine_id": contract["machine_id"]},
+        {"_id": 0}
+    ).sort("submitted_at", -1).to_list(10)
+    
+    return {
+        "contract": contract,
+        "machine": machine,
+        "documents": documents,
+        "checklists": checklists
+    }
+
+@api_router.put("/hire-contracts/{contract_id}/complete")
+async def complete_hire_contract(contract_id: str):
+    contract = await db.hire_contracts.find_one({"id": contract_id})
+    if not contract:
+        raise HTTPException(status_code=404, detail="Contract not found")
+    
+    await db.hire_contracts.update_one(
+        {"id": contract_id},
+        {"$set": {"status": "completed", "hire_end": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    # Update machine status back to available
+    await db.machines.update_one(
+        {"id": contract["machine_id"]},
+        {"$set": {"status": MachineStatus.AVAILABLE, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": "Contract completed successfully"}
 
 # ============== CHECKLIST ENDPOINTS ==============
 @api_router.get("/checklist-template")
