@@ -279,8 +279,56 @@ const sendQuoteToCustomer = async (quote) => {
   await sendEmail(customerEmail, subject, html);
 };
 
+// Send inquiry confirmation to customer
+const sendInquiryConfirmation = async (inquiry) => {
+  const customerEmail = inquiry.email;
+  if (!customerEmail) return;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; }
+            .header { background-color: #1A1D23; color: white; padding: 30px; text-align: center; }
+            .header h1 { margin: 10px 0 0 0; color: #E63946; font-size: 24px; }
+            .content { padding: 30px; background-color: #ffffff; }
+            .footer { background-color: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <img src="https://www.revma.com.au/assets/images/revma-logo.jpg" alt="Revma Logo" style="max-height: 60px;" />
+                <h1>ENQUIRY RECEIVED</h1>
+            </div>
+            <div class="content">
+                <p>Hi ${inquiry.first_name || 'there'},</p>
+                <p>Thank you for your equipment hire enquiry with Revma Pty Ltd.</p>
+                <p>We've received your request and our team will review it shortly. You'll receive a quote via email within 1 business day.</p>
+                <p><strong>Equipment requested:</strong> ${(inquiry.equipment || []).join(', ') || 'N/A'}</p>
+                <p><strong>Hire dates:</strong> ${inquiry.hire_start_date || 'TBC'} to ${inquiry.hire_end_date || 'TBC'}</p>
+                <p>If you have any questions in the meantime, please call us on <a href="tel:0448473862" style="color: #E63946;">0448 473 862</a> or reply to this email.</p>
+                <p>Cheers,<br/>The Revma Team</p>
+            </div>
+            <div class="footer">
+                <p>Revma Pty Ltd | ABN: 37 121 035 710</p>
+                <p>Unit 9/12 Channel Road, Mayfield West NSW 2304</p>
+                <p>Phone: 0448 473 862 | Email: office@revma.com.au</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+
+  const subject = `We've received your hire enquiry - Revma Pty Ltd`;
+  await sendEmail(customerEmail, subject, html);
+};
+
 module.exports = {
   sendEmail,
   sendInquiryNotification,
+  sendInquiryConfirmation,
   sendQuoteToCustomer
 };

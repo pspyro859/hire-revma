@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { Agreement, User, Machine } = require('../models');
+const { getPool } = require('../config/database');
 const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
@@ -51,29 +51,47 @@ const getDefaultChecklist = () => [
   { item: 'Safety Equipment Present', checked: false, notes: null }
 ];
 
+const parseJSON = (val) => {
+  if (!val) return val;
+  if (typeof val === 'object') return val;
+  try { return JSON.parse(val); } catch { return val; }
+};
+
+const formatAgreement = (row) => ({
+  ...row,
+  checklist: parseJSON(row.checklist) || [],
+  photos: parseJSON(row.photos) || []
+});
+
 // POST /api/agreements
 router.post('/', authenticate, async (req, res) => {
   try {
     const { customer_id, machine_id, hire_start_date, hire_end_date, hire_rate_type, delivery_method, delivery_address, job_site, purpose, special_conditions } = req.body;
 
     // Get customer
-    const customer = await User.findOne({ id: customer_id }).select('-password_hash -_id -__v');
-    if (!customer) {
+    const [customerRows] = await getPool().query(
+      'SELECT id, full_name, email, phone, drivers_licence, abn, company_name, address FROM users WHERE id = ?',
+      [customer_id]
+    );
+    if (customerRows.length === 0) {
       return res.status(404).json({ detail: 'Customer not found' });
     }
+    const customer = customerRows[0];
 
     // Get machine
-    const machine = await Machine.findOne({ id: machine_id }).select('-_id -__v');
-    if (!machine) {
+    const [machineRows] = await getPool().query('SELECT * FROM machines WHERE id = ?', [machine_id]);
+    if (machineRows.length === 0) {
       return res.status(404).json({ detail: 'Machine not found' });
     }
+    const machine = machineRows[0];
 
     // Calculate hire rate
     const rateMap = { daily: machine.daily_rate, weekly: machine.weekly_rate, monthly: machine.monthly_rate };
     const hireRate = rateMap[hire_rate_type] || machine.daily_rate;
 
-    const agreement = new Agreement({
-      id: uuidv4(),
+    const id = uuidv4();
+    await getPool().query('INSERT INTO agreements SET ?', [{
+      id,
       agreement_number: generateAgreementNumber(),
       customer_id,
       customer_name: customer.full_name,
@@ -93,26 +111,20 @@ router.post('/', authenticate, async (req, res) => {
       hire_rate: hireRate,
       security_bond: machine.security_bond,
       delivery_method,
-      delivery_address,
-      job_site,
-      purpose,
-      special_conditions,
-      checklist: getDefaultChecklist(),
-      photos: [],
+      delivery_address: delivery_address || null,
+      job_site: job_site || null,
+      purpose: purpose || null,
+      special_conditions: special_conditions || null,
+      checklist: JSON.stringify(getDefaultChecklist()),
+      photos: JSON.stringify([]),
       customer_signature: null,
       staff_signature: null,
       status: 'draft',
-      pdf_path: null,
-      created_at: new Date().toISOString(),
-      signed_at: null
-    });
+      pdf_path: null
+    }]);
 
-    await agreement.save();
-
-    const result = agreement.toObject();
-    delete result._id;
-    delete result.__v;
-    res.json(result);
+    const [rows] = await getPool().query('SELECT * FROM agreements WHERE id = ?', [id]);
+    res.json(formatAgreement(rows[0]));
   } catch (error) {
     console.error('Create agreement error:', error);
     res.status(500).json({ detail: 'Failed to create agreement' });
@@ -124,14 +136,24 @@ router.get('/', authenticate, async (req, res) => {
   try {
     const { status } = req.query;
     
-    const query = {};
-    if (req.user.role === 'customer') {
-      query.customer_id = req.user.id;
-    }
-    if (status) query.status = status;
+    let sql = 'SELECT * FROM agreements';
+    const params = [];
+    const conditions = [];
 
-    const agreements = await Agreement.find(query).select('-_id -__v').sort({ created_at: -1 });
-    res.json(agreements);
+    if (req.user.role === 'customer') {
+      conditions.push('customer_id = ?');
+      params.push(req.user.id);
+    }
+    if (status) {
+      conditions.push('status = ?');
+      params.push(status);
+    }
+
+    if (conditions.length > 0) sql += ` WHERE ${conditions.join(' AND ')}`;
+    sql += ' ORDER BY created_at DESC';
+
+    const [rows] = await getPool().query(sql, params);
+    res.json(rows.map(formatAgreement));
   } catch (error) {
     console.error('Get agreements error:', error);
     res.status(500).json({ detail: 'Failed to get agreements' });
@@ -141,10 +163,11 @@ router.get('/', authenticate, async (req, res) => {
 // GET /api/agreements/:id
 router.get('/:id', authenticate, async (req, res) => {
   try {
-    const agreement = await Agreement.findOne({ id: req.params.id }).select('-_id -__v');
-    if (!agreement) {
+    const [rows] = await getPool().query('SELECT * FROM agreements WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) {
       return res.status(404).json({ detail: 'Agreement not found' });
     }
+    const agreement = formatAgreement(rows[0]);
 
     // Check access
     if (req.user.role === 'customer' && agreement.customer_id !== req.user.id) {
@@ -161,10 +184,11 @@ router.get('/:id', authenticate, async (req, res) => {
 // PUT /api/agreements/:id/checklist
 router.put('/:id/checklist', authenticate, async (req, res) => {
   try {
-    const agreement = await Agreement.findOne({ id: req.params.id });
-    if (!agreement) {
+    const [rows] = await getPool().query('SELECT * FROM agreements WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) {
       return res.status(404).json({ detail: 'Agreement not found' });
     }
+    const agreement = rows[0];
 
     const checklist = req.body;
     const allChecked = checklist.every(item => item.checked);
@@ -174,9 +198,9 @@ router.put('/:id/checklist', authenticate, async (req, res) => {
       newStatus = 'pending_checklist';
     }
 
-    await Agreement.updateOne(
-      { id: req.params.id },
-      { $set: { checklist, status: newStatus } }
+    await getPool().query(
+      'UPDATE agreements SET checklist = ?, status = ? WHERE id = ?',
+      [JSON.stringify(checklist), newStatus, req.params.id]
     );
 
     res.json({ success: true, all_checked: allChecked });
@@ -189,30 +213,27 @@ router.put('/:id/checklist', authenticate, async (req, res) => {
 // POST /api/agreements/:id/photos
 router.post('/:id/photos', authenticate, uploadPhoto.single('file'), async (req, res) => {
   try {
-    const agreement = await Agreement.findOne({ id: req.params.id });
-    if (!agreement) {
+    const [rows] = await getPool().query('SELECT * FROM agreements WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) {
       return res.status(404).json({ detail: 'Agreement not found' });
     }
+    const agreement = rows[0];
 
     const { position } = req.body;
     const filename = req.file.filename;
 
     // Update photos array
-    let photos = agreement.photos || [];
+    let photos = parseJSON(agreement.photos) || [];
     photos = photos.filter(p => p.position !== position);
-    photos.push({
-      position,
-      filename,
-      uploaded_at: new Date().toISOString()
-    });
+    photos.push({ position, filename, uploaded_at: new Date().toISOString() });
 
     // Check if all 4 photos uploaded
     const hasAllPhotos = new Set(photos.map(p => p.position)).size >= 4;
     const newStatus = hasAllPhotos ? 'pending_signature' : 'pending_photos';
 
-    await Agreement.updateOne(
-      { id: req.params.id },
-      { $set: { photos, status: newStatus } }
+    await getPool().query(
+      'UPDATE agreements SET photos = ?, status = ? WHERE id = ?',
+      [JSON.stringify(photos), newStatus, req.params.id]
     );
 
     res.json({ success: true, filename, has_all_photos: hasAllPhotos });
@@ -225,17 +246,15 @@ router.post('/:id/photos', authenticate, uploadPhoto.single('file'), async (req,
 // POST /api/agreements/:id/sign
 router.post('/:id/sign', authenticate, async (req, res) => {
   try {
-    const agreement = await Agreement.findOne({ id: req.params.id });
-    if (!agreement) {
+    const [rows] = await getPool().query('SELECT * FROM agreements WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) {
       return res.status(404).json({ detail: 'Agreement not found' });
     }
+    const agreement = rows[0];
 
     const { signature_type, signature_data } = req.body;
 
     // Validate signature type
-    if (signature_type === 'customer' && !['customer', 'staff', 'admin'].includes(req.user.role)) {
-      return res.status(403).json({ detail: 'Cannot sign as customer' });
-    }
     if (signature_type === 'staff' && !['staff', 'admin'].includes(req.user.role)) {
       return res.status(403).json({ detail: 'Staff access required' });
     }
@@ -244,7 +263,6 @@ router.post('/:id/sign', authenticate, async (req, res) => {
     const sigFilename = `${req.params.id}_${signature_type}_${uuidv4().slice(0, 8)}.png`;
     const sigPath = path.join(__dirname, '../uploads/signatures', sigFilename);
 
-    // Decode and save base64 signature
     const sigData = signature_data.includes(',') ? signature_data.split(',')[1] : signature_data;
     const sigBuffer = Buffer.from(sigData, 'base64');
     fs.writeFileSync(sigPath, sigBuffer);
@@ -255,13 +273,17 @@ router.post('/:id/sign', authenticate, async (req, res) => {
     // Check if both signatures present
     if (signature_type === 'customer' && agreement.staff_signature) {
       updateData.status = 'active';
-      updateData.signed_at = new Date().toISOString();
+      updateData.signed_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
     } else if (signature_type === 'staff' && agreement.customer_signature) {
       updateData.status = 'active';
-      updateData.signed_at = new Date().toISOString();
+      updateData.signed_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
     }
 
-    await Agreement.updateOne({ id: req.params.id }, { $set: updateData });
+    const setClauses = Object.keys(updateData).map(k => `\`${k}\` = ?`).join(', ');
+    await getPool().query(
+      `UPDATE agreements SET ${setClauses} WHERE id = ?`,
+      [...Object.values(updateData), req.params.id]
+    );
 
     res.json({ success: true, signature_filename: sigFilename });
   } catch (error) {

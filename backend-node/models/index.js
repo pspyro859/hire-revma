@@ -1,141 +1,367 @@
-const mongoose = require('mongoose');
+// MySQL helper module - replaces Mongoose models
+const { getPool } = require('../config/database');
 
-// User Schema
-const userSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
-  password_hash: { type: String, required: true },
-  full_name: { type: String, required: true },
-  phone: String,
-  role: { type: String, enum: ['customer', 'staff', 'admin'], default: 'customer' },
-  company_name: String,
-  abn: String,
-  drivers_licence: String,
-  address: String,
-  created_at: { type: String, default: () => new Date().toISOString() }
-});
+// ─── JSON helpers ─────────────────────────────────────────────────────────────
+const parseJSON = (val) => {
+  if (val === null || val === undefined) return val;
+  if (typeof val === 'object') return val;
+  try { return JSON.parse(val); } catch { return val; }
+};
 
-// Machine Schema
-const machineSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  make: String,
-  model: String,
-  category: String,
-  description: String,
-  image_url: String,
-  daily_rate: Number,
-  weekly_rate: Number,
-  monthly_rate: Number,
-  security_bond: Number,
-  specifications: { type: Object, default: {} },
-  is_available: { type: Boolean, default: true }
-});
+const toJSON = (val) => {
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'string') return val;
+  return JSON.stringify(val);
+};
 
-// Agreement Schema
-const agreementSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  agreement_number: { type: String, unique: true },
-  customer_id: String,
-  customer_name: String,
-  customer_email: String,
-  customer_phone: String,
-  customer_licence: String,
-  customer_abn: String,
-  customer_company: String,
-  customer_address: String,
-  machine_id: String,
-  machine_name: String,
-  machine_make: String,
-  machine_model: String,
-  hire_start_date: String,
-  hire_end_date: String,
-  hire_rate_type: String,
-  hire_rate: Number,
-  security_bond: Number,
-  delivery_method: String,
-  delivery_address: String,
-  job_site: String,
-  purpose: String,
-  special_conditions: String,
-  checklist: { type: Array, default: [] },
-  photos: { type: Array, default: [] },
-  customer_signature: String,
-  staff_signature: String,
-  status: { type: String, default: 'draft' },
-  pdf_path: String,
-  created_at: { type: String, default: () => new Date().toISOString() },
-  signed_at: String
-});
+// ─── User helpers ─────────────────────────────────────────────────────────────
+const User = {
+  async findOne(where) {
+    const [keys, vals] = buildWhere(where);
+    const [rows] = await getPool().query(`SELECT * FROM users WHERE ${keys}`, vals);
+    return rows[0] ? formatUser(rows[0]) : null;
+  },
+  async find(where = {}) {
+    if (Object.keys(where).length === 0) {
+      const [rows] = await getPool().query('SELECT * FROM users ORDER BY created_at DESC');
+      return rows.map(formatUser);
+    }
+    const [keys, vals] = buildWhere(where);
+    const [rows] = await getPool().query(`SELECT * FROM users WHERE ${keys} ORDER BY created_at DESC`, vals);
+    return rows.map(formatUser);
+  },
+  async create(data) {
+    await getPool().query('INSERT INTO users SET ?', [data]);
+    return this.findOne({ id: data.id });
+  },
+  async updateOne(where, update) {
+    const updateData = update.$set || update;
+    const [wKeys, wVals] = buildWhere(where);
+    const setClauses = Object.keys(updateData).map(k => `\`${k}\` = ?`).join(', ');
+    const setVals = Object.values(updateData);
+    const [result] = await getPool().query(
+      `UPDATE users SET ${setClauses} WHERE ${wKeys}`,
+      [...setVals, ...wVals]
+    );
+    return { matchedCount: result.affectedRows };
+  },
+  async countDocuments(where = {}) {
+    if (Object.keys(where).length === 0) {
+      const [rows] = await getPool().query('SELECT COUNT(*) as count FROM users');
+      return rows[0].count;
+    }
+    const [keys, vals] = buildWhere(where);
+    const [rows] = await getPool().query(`SELECT COUNT(*) as count FROM users WHERE ${keys}`, vals);
+    return rows[0].count;
+  }
+};
 
-// Inquiry Schema
-const inquirySchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  first_name: String,
-  last_name: String,
-  email: String,
-  phone: String,
-  is_business: { type: Boolean, default: false },
-  company_name: String,
-  abn: String,
-  equipment: { type: Array, default: [] },
-  hire_start_date: String,
-  hire_end_date: String,
-  hire_rate_preference: String,
-  delivery_method: String,
-  delivery_address: String,
-  job_description: String,
-  additional_notes: String,
-  status: { type: String, default: 'new' },
-  created_at: { type: String, default: () => new Date().toISOString() }
-});
+function formatUser(row) {
+  return row;
+}
 
-// Quote Schema
-const quoteSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  quote_number: { type: String, unique: true },
-  inquiry_id: String,
-  customer_email: String,
-  customer_name: String,
-  customer_phone: String,
-  line_items: { type: Array, default: [] },
-  hire_start_date: String,
-  hire_end_date: String,
-  delivery_method: String,
-  delivery_address: String,
-  delivery_fee: { type: Number, default: 0 },
-  subtotal: Number,
-  security_bond: Number,
-  total: Number,
-  notes: String,
-  valid_until: String,
-  status: { type: String, default: 'draft' },
-  access_token: String,
-  id_documents: { type: Array, default: [] },
-  id_verified: { type: Boolean, default: false },
-  customer_signature: String,
-  signed_at: String,
-  created_at: { type: String, default: () => new Date().toISOString() },
-  created_by: String
-});
+// ─── Machine helpers ──────────────────────────────────────────────────────────
+const Machine = {
+  async findOne(where) {
+    const [keys, vals] = buildWhere(where);
+    const [rows] = await getPool().query(`SELECT * FROM machines WHERE ${keys}`, vals);
+    return rows[0] ? formatMachine(rows[0]) : null;
+  },
+  async find(where = {}) {
+    if (Object.keys(where).length === 0) {
+      const [rows] = await getPool().query('SELECT * FROM machines ORDER BY name');
+      return rows.map(formatMachine);
+    }
+    const conditions = [];
+    const vals = [];
+    for (const [k, v] of Object.entries(where)) {
+      conditions.push(`\`${k}\` = ?`);
+      vals.push(v);
+    }
+    const [rows] = await getPool().query(`SELECT * FROM machines WHERE ${conditions.join(' AND ')} ORDER BY name`, vals);
+    return rows.map(formatMachine);
+  },
+  async create(data) {
+    const row = { ...data, specifications: toJSON(data.specifications) };
+    await getPool().query('INSERT INTO machines SET ?', [row]);
+    return this.findOne({ id: data.id });
+  },
+  async updateOne(where, update) {
+    const updateData = update.$set || update;
+    if (updateData.specifications !== undefined) {
+      updateData.specifications = toJSON(updateData.specifications);
+    }
+    const [wKeys, wVals] = buildWhere(where);
+    const setClauses = Object.keys(updateData).map(k => `\`${k}\` = ?`).join(', ');
+    const setVals = Object.values(updateData);
+    const [result] = await getPool().query(
+      `UPDATE machines SET ${setClauses} WHERE ${wKeys}`,
+      [...setVals, ...wVals]
+    );
+    return { matchedCount: result.affectedRows };
+  },
+  async deleteMany(where = {}) {
+    if (Object.keys(where).length === 0) {
+      await getPool().query('DELETE FROM machines');
+    } else {
+      const [keys, vals] = buildWhere(where);
+      await getPool().query(`DELETE FROM machines WHERE ${keys}`, vals);
+    }
+  },
+  async insertMany(docs) {
+    for (const doc of docs) {
+      const row = { ...doc, specifications: toJSON(doc.specifications) };
+      await getPool().query('INSERT INTO machines SET ?', [row]);
+    }
+  },
+  async countDocuments(where = {}) {
+    if (Object.keys(where).length === 0) {
+      const [rows] = await getPool().query('SELECT COUNT(*) as count FROM machines');
+      return rows[0].count;
+    }
+    const [keys, vals] = buildWhere(where);
+    const [rows] = await getPool().query(`SELECT COUNT(*) as count FROM machines WHERE ${keys}`, vals);
+    return rows[0].count;
+  }
+};
 
-// Terms Schema
-const termsSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  section_name: String,
-  content: String,
-  order: Number,
-  is_active: { type: Boolean, default: true },
-  updated_at: { type: String, default: () => new Date().toISOString() }
-});
+function formatMachine(row) {
+  return { ...row, specifications: parseJSON(row.specifications) };
+}
 
-// Create models
-const User = mongoose.model('User', userSchema);
-const Machine = mongoose.model('Machine', machineSchema);
-const Agreement = mongoose.model('Agreement', agreementSchema);
-const Inquiry = mongoose.model('Inquiry', inquirySchema);
-const Quote = mongoose.model('Quote', quoteSchema);
-const Terms = mongoose.model('Terms', termsSchema);
+// ─── Agreement helpers ────────────────────────────────────────────────────────
+const Agreement = {
+  async findOne(where) {
+    const [keys, vals] = buildWhere(where);
+    const [rows] = await getPool().query(`SELECT * FROM agreements WHERE ${keys}`, vals);
+    return rows[0] ? formatAgreement(rows[0]) : null;
+  },
+  async find(where = {}, opts = {}) {
+    let sql = 'SELECT * FROM agreements';
+    const vals = [];
+    if (Object.keys(where).length > 0) {
+      const conditions = Object.entries(where).map(([k, v]) => { vals.push(v); return `\`${k}\` = ?`; });
+      sql += ` WHERE ${conditions.join(' AND ')}`;
+    }
+    sql += ' ORDER BY created_at DESC';
+    const [rows] = await getPool().query(sql, vals);
+    return rows.map(formatAgreement);
+  },
+  async create(data) {
+    const row = {
+      ...data,
+      checklist: toJSON(data.checklist),
+      photos: toJSON(data.photos)
+    };
+    await getPool().query('INSERT INTO agreements SET ?', [row]);
+    return this.findOne({ id: data.id });
+  },
+  async updateOne(where, update) {
+    const updateData = update.$set || update;
+    if (updateData.checklist !== undefined) updateData.checklist = toJSON(updateData.checklist);
+    if (updateData.photos !== undefined) updateData.photos = toJSON(updateData.photos);
+    const [wKeys, wVals] = buildWhere(where);
+    const setClauses = Object.keys(updateData).map(k => `\`${k}\` = ?`).join(', ');
+    const setVals = Object.values(updateData);
+    const [result] = await getPool().query(
+      `UPDATE agreements SET ${setClauses} WHERE ${wKeys}`,
+      [...setVals, ...wVals]
+    );
+    return { matchedCount: result.affectedRows };
+  },
+  async deleteMany(where = {}) {
+    if (Object.keys(where).length === 0) {
+      await getPool().query('DELETE FROM agreements');
+    } else {
+      const [keys, vals] = buildWhere(where);
+      await getPool().query(`DELETE FROM agreements WHERE ${keys}`, vals);
+    }
+  }
+};
+
+function formatAgreement(row) {
+  return {
+    ...row,
+    checklist: parseJSON(row.checklist) || [],
+    photos: parseJSON(row.photos) || []
+  };
+}
+
+// ─── Inquiry helpers ──────────────────────────────────────────────────────────
+const Inquiry = {
+  async findOne(where) {
+    const [keys, vals] = buildWhere(where);
+    const [rows] = await getPool().query(`SELECT * FROM inquiries WHERE ${keys}`, vals);
+    return rows[0] ? formatInquiry(rows[0]) : null;
+  },
+  async find(where = {}) {
+    let sql = 'SELECT * FROM inquiries';
+    const vals = [];
+    if (Object.keys(where).length > 0) {
+      const conditions = Object.entries(where).map(([k, v]) => { vals.push(v); return `\`${k}\` = ?`; });
+      sql += ` WHERE ${conditions.join(' AND ')}`;
+    }
+    sql += ' ORDER BY created_at DESC';
+    const [rows] = await getPool().query(sql, vals);
+    return rows.map(formatInquiry);
+  },
+  async create(data) {
+    const row = { ...data, equipment: toJSON(data.equipment) };
+    await getPool().query('INSERT INTO inquiries SET ?', [row]);
+    return this.findOne({ id: data.id });
+  },
+  async updateOne(where, update) {
+    const updateData = update.$set || update;
+    if (updateData.equipment !== undefined) updateData.equipment = toJSON(updateData.equipment);
+    const [wKeys, wVals] = buildWhere(where);
+    const setClauses = Object.keys(updateData).map(k => `\`${k}\` = ?`).join(', ');
+    const setVals = Object.values(updateData);
+    const [result] = await getPool().query(
+      `UPDATE inquiries SET ${setClauses} WHERE ${wKeys}`,
+      [...setVals, ...wVals]
+    );
+    return { matchedCount: result.affectedRows };
+  },
+  async deleteMany(where = {}) {
+    if (Object.keys(where).length === 0) {
+      await getPool().query('DELETE FROM inquiries');
+    } else {
+      const [keys, vals] = buildWhere(where);
+      await getPool().query(`DELETE FROM inquiries WHERE ${keys}`, vals);
+    }
+  },
+  async countDocuments(where = {}) {
+    if (Object.keys(where).length === 0) {
+      const [rows] = await getPool().query('SELECT COUNT(*) as count FROM inquiries');
+      return rows[0].count;
+    }
+    const [keys, vals] = buildWhere(where);
+    const [rows] = await getPool().query(`SELECT COUNT(*) as count FROM inquiries WHERE ${keys}`, vals);
+    return rows[0].count;
+  }
+};
+
+function formatInquiry(row) {
+  return { ...row, equipment: parseJSON(row.equipment) || [] };
+}
+
+// ─── Quote helpers ────────────────────────────────────────────────────────────
+const Quote = {
+  async findOne(where) {
+    const [keys, vals] = buildWhere(where);
+    const [rows] = await getPool().query(`SELECT * FROM quotes WHERE ${keys}`, vals);
+    return rows[0] ? formatQuote(rows[0]) : null;
+  },
+  async find(where = {}) {
+    let sql = 'SELECT * FROM quotes';
+    const vals = [];
+    if (Object.keys(where).length > 0) {
+      const conditions = Object.entries(where).map(([k, v]) => { vals.push(v); return `\`${k}\` = ?`; });
+      sql += ` WHERE ${conditions.join(' AND ')}`;
+    }
+    sql += ' ORDER BY created_at DESC';
+    const [rows] = await getPool().query(sql, vals);
+    return rows.map(formatQuote);
+  },
+  async create(data) {
+    const row = {
+      ...data,
+      line_items: toJSON(data.line_items),
+      id_documents: toJSON(data.id_documents)
+    };
+    await getPool().query('INSERT INTO quotes SET ?', [row]);
+    return this.findOne({ id: data.id });
+  },
+  async updateOne(where, update) {
+    const updateData = update.$set || update;
+    if (updateData.line_items !== undefined) updateData.line_items = toJSON(updateData.line_items);
+    if (updateData.id_documents !== undefined) updateData.id_documents = toJSON(updateData.id_documents);
+    const [wKeys, wVals] = buildWhere(where);
+    const setClauses = Object.keys(updateData).map(k => `\`${k}\` = ?`).join(', ');
+    const setVals = Object.values(updateData);
+    const [result] = await getPool().query(
+      `UPDATE quotes SET ${setClauses} WHERE ${wKeys}`,
+      [...setVals, ...wVals]
+    );
+    return { matchedCount: result.affectedRows };
+  },
+  async deleteMany(where = {}) {
+    if (Object.keys(where).length === 0) {
+      await getPool().query('DELETE FROM quotes');
+    } else {
+      const [keys, vals] = buildWhere(where);
+      await getPool().query(`DELETE FROM quotes WHERE ${keys}`, vals);
+    }
+  }
+};
+
+function formatQuote(row) {
+  return {
+    ...row,
+    line_items: parseJSON(row.line_items) || [],
+    id_documents: parseJSON(row.id_documents) || []
+  };
+}
+
+// ─── Terms helpers ────────────────────────────────────────────────────────────
+const Terms = {
+  async findOne(where) {
+    const [keys, vals] = buildWhere(where);
+    const [rows] = await getPool().query(`SELECT * FROM terms WHERE ${keys}`, vals);
+    return rows[0] || null;
+  },
+  async find(where = {}) {
+    let sql = 'SELECT * FROM terms';
+    const vals = [];
+    if (Object.keys(where).length > 0) {
+      const conditions = Object.entries(where).map(([k, v]) => { vals.push(v); return `\`${k}\` = ?`; });
+      sql += ` WHERE ${conditions.join(' AND ')}`;
+    }
+    sql += ' ORDER BY display_order ASC';
+    const [rows] = await getPool().query(sql, vals);
+    return rows;
+  },
+  async create(data) {
+    await getPool().query('INSERT INTO terms SET ?', [data]);
+    return this.findOne({ id: data.id });
+  },
+  async updateOne(where, update) {
+    const updateData = update.$set || update;
+    const [wKeys, wVals] = buildWhere(where);
+    const setClauses = Object.keys(updateData).map(k => `\`${k}\` = ?`).join(', ');
+    const setVals = Object.values(updateData);
+    const [result] = await getPool().query(
+      `UPDATE terms SET ${setClauses} WHERE ${wKeys}`,
+      [...setVals, ...wVals]
+    );
+    return { matchedCount: result.affectedRows };
+  },
+  async deleteOne(where) {
+    const [keys, vals] = buildWhere(where);
+    const [result] = await getPool().query(`DELETE FROM terms WHERE ${keys}`, vals);
+    return { deletedCount: result.affectedRows };
+  },
+  async deleteMany(where = {}) {
+    if (Object.keys(where).length === 0) {
+      await getPool().query('DELETE FROM terms');
+    } else {
+      const [keys, vals] = buildWhere(where);
+      await getPool().query(`DELETE FROM terms WHERE ${keys}`, vals);
+    }
+  },
+  async insertMany(docs) {
+    for (const doc of docs) {
+      await getPool().query('INSERT INTO terms SET ?', [doc]);
+    }
+  }
+};
+
+// ─── Utility: build WHERE clause ─────────────────────────────────────────────
+function buildWhere(where) {
+  const keys = Object.entries(where).map(([k]) => `\`${k}\` = ?`).join(' AND ');
+  const vals = Object.values(where);
+  return [keys, vals];
+}
 
 module.exports = {
   User,
@@ -143,5 +369,7 @@ module.exports = {
   Agreement,
   Inquiry,
   Quote,
-  Terms
+  Terms,
+  parseJSON,
+  toJSON
 };

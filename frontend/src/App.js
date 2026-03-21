@@ -15,7 +15,15 @@ import SettingsPage from "./pages/SettingsPage";
 import CustomerInquiryPage from "./pages/CustomerInquiryPage";
 import QuotesPage from "./pages/QuotesPage";
 import CreateQuotePage from "./pages/CreateQuotePage";
+import QuoteDetailPage from "./pages/QuoteDetailPage";
 import CustomerQuotePage from "./pages/CustomerQuotePage";
+
+// New pages
+import PublicMachinePage from "./pages/PublicMachinePage";
+import PrestartChecklistPage from "./pages/PrestartChecklistPage";
+import MaintenancePage from "./pages/MaintenancePage";
+import PrestartSubmissionsPage from "./pages/PrestartSubmissionsPage";
+import QRLabelsPage from "./pages/QRLabelsPage";
 
 import "@/App.css";
 
@@ -73,6 +81,10 @@ function AppRoutes() {
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
       <Route path="/inquiry" element={<CustomerInquiryPage />} />
       <Route path="/quote/:quoteId" element={<CustomerQuotePage />} />
+
+      {/* Public Machine Pages (QR Code targets — no auth required) */}
+      <Route path="/m/:qrCodeId" element={<PublicMachinePage />} />
+      <Route path="/m/:qrCodeId/prestart" element={<PrestartChecklistPage />} />
       
       {/* Protected Routes */}
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
@@ -84,6 +96,10 @@ function AppRoutes() {
       <Route path="/inquiries" element={<ProtectedRoute roles={["staff", "admin"]}><InquiriesPage /></ProtectedRoute>} />
       <Route path="/quotes" element={<ProtectedRoute roles={["staff", "admin"]}><QuotesPage /></ProtectedRoute>} />
       <Route path="/quotes/new" element={<ProtectedRoute roles={["staff", "admin"]}><CreateQuotePage /></ProtectedRoute>} />
+      <Route path="/quotes/:id" element={<ProtectedRoute roles={["staff", "admin"]}><QuoteDetailPage /></ProtectedRoute>} />
+      <Route path="/maintenance" element={<ProtectedRoute roles={["staff", "admin"]}><MaintenancePage /></ProtectedRoute>} />
+      <Route path="/prestart" element={<ProtectedRoute roles={["staff", "admin"]}><PrestartSubmissionsPage /></ProtectedRoute>} />
+      <Route path="/qr-labels" element={<ProtectedRoute roles={["staff", "admin"]}><QRLabelsPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute roles={["admin"]}><SettingsPage /></ProtectedRoute>} />
       
       {/* Catch all */}

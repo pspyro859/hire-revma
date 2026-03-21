@@ -15,6 +15,9 @@ const quoteRoutes = require('./routes/quotes');
 const termsRoutes = require('./routes/terms');
 const userRoutes = require('./routes/users');
 const seedRoutes = require('./routes/seed');
+const prestartRoutes = require('./routes/prestart');
+const maintenanceRoutes = require('./routes/maintenance');
+const publicRoutes = require('./routes/public');
 
 // Import database connection
 const { connectDB } = require('./config/database');
@@ -61,17 +64,20 @@ app.use('/api/customer', quoteRoutes); // Customer quote access routes
 app.use('/api/terms', termsRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api', seedRoutes);
+app.use('/api/prestart', prestartRoutes);
+app.use('/api/maintenance', maintenanceRoutes);
+app.use('/api/public', publicRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+  res.json({ status: 'healthy', timestamp: new Date().toISOString(), db: 'mysql' });
 });
 
 // Root route
 app.get('/api/', (req, res) => {
   res.json({ 
     message: 'Revma Heavy Equipment Hire API', 
-    version: '1.0.0',
+    version: '2.0.0',
     docs: '/api/health'
   });
 });
@@ -96,7 +102,7 @@ const startServer = async () => {
     await connectDB();
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
-      console.log(`Database: ${process.env.DB_TYPE || 'mongodb'}`);
+      console.log('Database: MySQL');
     });
   } catch (error) {
     console.error('Failed to start server:', error);

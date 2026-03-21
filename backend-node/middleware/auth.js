@@ -1,8 +1,16 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
-const { getDBType } = require('../config/database');
+const { getPool } = require('../config/database');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'revma-hire-secret-key-change-in-production';
+
+// Fetch user from MySQL by id
+const getUserById = async (id) => {
+  const [rows] = await getPool().query(
+    'SELECT id, email, full_name, phone, role, company_name, abn, drivers_licence, address, created_at FROM users WHERE id = ?',
+    [id]
+  );
+  return rows[0] || null;
+};
 
 // Verify JWT token middleware
 const authenticate = async (req, res, next) => {
@@ -15,13 +23,12 @@ const authenticate = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // Get user from database
-    const user = await User.findOne({ id: decoded.sub }).select('-password_hash -_id -__v');
+    const user = await getUserById(decoded.sub);
     if (!user) {
       return res.status(401).json({ detail: 'User not found' });
     }
 
-    req.user = user.toObject ? user.toObject() : user;
+    req.user = user;
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
@@ -54,9 +61,9 @@ const optionalAuth = async (req, res, next) => {
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
       const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findOne({ id: decoded.sub }).select('-password_hash -_id -__v');
+      const user = await getUserById(decoded.sub);
       if (user) {
-        req.user = user.toObject ? user.toObject() : user;
+        req.user = user;
       }
     }
   } catch (error) {

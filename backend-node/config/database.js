@@ -1,27 +1,9 @@
-// Database Configuration - Supports both MongoDB and MySQL
-const mongoose = require('mongoose');
+// Database Configuration - MySQL only
 const mysql = require('mysql2/promise');
-
-let db = null;
-let dbType = process.env.DB_TYPE || 'mongodb';
-
-// MongoDB connection
-const connectMongoDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URL, {
-      dbName: process.env.DB_NAME || 'revma_hire'
-    });
-    console.log('Connected to MongoDB');
-    db = mongoose.connection;
-    return db;
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw error;
-  }
-};
 
 // MySQL connection pool
 let mysqlPool = null;
+
 const connectMySQL = async () => {
   try {
     mysqlPool = mysql.createPool({
@@ -79,7 +61,12 @@ const initMySQLTables = async () => {
       monthly_rate DECIMAL(10,2),
       security_bond DECIMAL(10,2),
       specifications JSON,
-      is_available BOOLEAN DEFAULT TRUE
+      is_available BOOLEAN DEFAULT TRUE,
+      serial_number VARCHAR(100),
+      year INT,
+      hours_reading DECIMAL(10,1),
+      registration VARCHAR(50),
+      qr_code_id VARCHAR(50) UNIQUE
     )`,
     `CREATE TABLE IF NOT EXISTS agreements (
       id VARCHAR(36) PRIMARY KEY,
@@ -134,6 +121,7 @@ const initMySQLTables = async () => {
       delivery_address TEXT,
       job_description TEXT,
       additional_notes TEXT,
+      quote_id VARCHAR(36),
       status VARCHAR(50) DEFAULT 'new',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
@@ -172,6 +160,66 @@ const initMySQLTables = async () => {
       display_order INT,
       is_active BOOLEAN DEFAULT TRUE,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS machine_documents (
+      id VARCHAR(36) PRIMARY KEY,
+      machine_id VARCHAR(36) NOT NULL,
+      doc_type ENUM('general_safety_guide', 'operators_manual', 'risk_assessment', 'service_maintenance', 'safety_alerts') NOT NULL,
+      title VARCHAR(255),
+      url TEXT NOT NULL,
+      uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (machine_id) REFERENCES machines(id) ON DELETE CASCADE,
+      UNIQUE KEY unique_machine_doc (machine_id, doc_type)
+    )`,
+    `CREATE TABLE IF NOT EXISTS prestart_checklist_templates (
+      id VARCHAR(36) PRIMARY KEY,
+      machine_id VARCHAR(36),
+      category VARCHAR(50) NOT NULL,
+      item_order INT NOT NULL,
+      item_text VARCHAR(255) NOT NULL,
+      is_active BOOLEAN DEFAULT TRUE,
+      FOREIGN KEY (machine_id) REFERENCES machines(id) ON DELETE SET NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS prestart_submissions (
+      id VARCHAR(36) PRIMARY KEY,
+      machine_id VARCHAR(36) NOT NULL,
+      operator_name VARCHAR(255) NOT NULL,
+      operator_company VARCHAR(255),
+      operator_phone VARCHAR(50),
+      submission_date DATE NOT NULL,
+      hours_reading DECIMAL(10,1),
+      overall_status ENUM('pass', 'fail') NOT NULL,
+      notes TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (machine_id) REFERENCES machines(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS prestart_submission_items (
+      id VARCHAR(36) PRIMARY KEY,
+      submission_id VARCHAR(36) NOT NULL,
+      template_item_id VARCHAR(36),
+      category VARCHAR(50) NOT NULL,
+      item_text VARCHAR(255) NOT NULL,
+      status ENUM('pass', 'fail', 'na') NOT NULL,
+      comment TEXT,
+      FOREIGN KEY (submission_id) REFERENCES prestart_submissions(id) ON DELETE CASCADE
+    )`,
+    `CREATE TABLE IF NOT EXISTS maintenance_logs (
+      id VARCHAR(36) PRIMARY KEY,
+      machine_id VARCHAR(36) NOT NULL,
+      maintenance_type ENUM('scheduled', 'unscheduled', 'emergency') NOT NULL,
+      description TEXT NOT NULL,
+      parts_replaced TEXT,
+      cost DECIMAL(10,2),
+      technician_name VARCHAR(255),
+      service_date DATE NOT NULL,
+      hours_at_service DECIMAL(10,1),
+      next_service_due DATE,
+      next_service_hours DECIMAL(10,1),
+      notes TEXT,
+      created_by VARCHAR(36),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (machine_id) REFERENCES machines(id),
+      FOREIGN KEY (created_by) REFERENCES users(id)
     )`
   ];
 
@@ -183,25 +231,25 @@ const initMySQLTables = async () => {
 
 // Main connection function
 const connectDB = async () => {
-  if (dbType === 'mysql') {
-    return connectMySQL();
-  }
-  return connectMongoDB();
+  return connectMySQL();
 };
 
-// Get database instance
-const getDB = () => {
-  if (dbType === 'mysql') {
-    return mysqlPool;
+// Get pool instance
+const getPool = () => {
+  if (!mysqlPool) {
+    throw new Error('MySQL pool not initialized. Call connectDB first.');
   }
-  return mongoose.connection;
+  return mysqlPool;
 };
 
-const getDBType = () => dbType;
+// Keep getDB for backwards compat
+const getDB = () => mysqlPool;
+const getDBType = () => 'mysql';
 
 module.exports = {
   connectDB,
   getDB,
   getDBType,
-  mongoose
+  getPool,
+  initMySQLTables
 };

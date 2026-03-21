@@ -275,11 +275,17 @@ export default function InquiriesPage() {
                         <Button
                           size="sm"
                           className="bg-[#E63946] hover:bg-[#c62836] text-white"
-                          onClick={() => navigate("/quotes/new", { state: { inquiry } })}
+                          onClick={() => {
+                            if (inquiry.quote_id) {
+                              navigate(`/quotes/${inquiry.quote_id}`);
+                            } else {
+                              navigate("/quotes/new", { state: { inquiry } });
+                            }
+                          }}
                           data-testid="create-quote-btn"
                         >
                           <FileText className="w-4 h-4 mr-1" />
-                          Create Quote
+                          {inquiry.quote_id ? "Review Quote" : "Create Quote"}
                         </Button>
                         <Button
                           size="sm"

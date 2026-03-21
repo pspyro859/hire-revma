@@ -1,13 +1,11 @@
 const express = require('express');
-const { User } = require('../models');
+const { getPool } = require('../config/database');
 const { authenticate, requireStaff, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Format user response (exclude password)
 const formatUserResponse = (user) => {
-  const userObj = user.toObject ? user.toObject() : user;
-  const { password_hash, _id, __v, ...rest } = userObj;
+  const { password_hash, ...rest } = user;
   return rest;
 };
 
@@ -16,11 +14,16 @@ router.get('/', authenticate, requireStaff, async (req, res) => {
   try {
     const { role } = req.query;
     
-    const query = {};
-    if (role) query.role = role;
+    let sql = 'SELECT id, email, full_name, phone, role, company_name, abn, drivers_licence, address, created_at FROM users';
+    const params = [];
+    if (role) {
+      sql += ' WHERE role = ?';
+      params.push(role);
+    }
+    sql += ' ORDER BY created_at DESC';
 
-    const users = await User.find(query).select('-password_hash -_id -__v');
-    res.json(users.map(u => formatUserResponse(u)));
+    const [rows] = await getPool().query(sql, params);
+    res.json(rows.map(formatUserResponse));
   } catch (error) {
     console.error('Get users error:', error);
     res.status(500).json({ detail: 'Failed to get users' });
@@ -36,12 +39,12 @@ router.put('/:id/role', authenticate, requireAdmin, async (req, res) => {
       return res.status(400).json({ detail: 'Invalid role' });
     }
 
-    const result = await User.updateOne(
-      { id: req.params.id },
-      { $set: { role } }
+    const [result] = await getPool().query(
+      'UPDATE users SET role = ? WHERE id = ?',
+      [role, req.params.id]
     );
 
-    if (result.matchedCount === 0) {
+    if (result.affectedRows === 0) {
       return res.status(404).json({ detail: 'User not found' });
     }
 
