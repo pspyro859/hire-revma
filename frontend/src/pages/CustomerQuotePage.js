@@ -293,7 +293,7 @@ export default function CustomerQuotePage() {
                     <p className="font-medium text-neutral-900">{item.machine_name}</p>
                     <p className="text-sm text-neutral-500">{item.rate_type} rate</p>
                   </div>
-                  <p className="font-bold text-[#E63946]">${item.subtotal?.toFixed(2)}</p>
+                  <p className="font-bold text-[#E63946]">${parseFloat(item.subtotal || 0).toFixed(2)}</p>
                 </div>
               ))}
             </div>
@@ -302,21 +302,21 @@ export default function CustomerQuotePage() {
             <div className="bg-neutral-50 rounded-lg p-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-neutral-600">Subtotal</span>
-                <span className="font-medium">${quote.subtotal?.toFixed(2)}</span>
+                <span className="font-medium">${parseFloat(quote.subtotal || 0).toFixed(2)}</span>
               </div>
               {quote.delivery_fee > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-600">Delivery Fee</span>
-                  <span className="font-medium">${quote.delivery_fee?.toFixed(2)}</span>
+                  <span className="font-medium">${parseFloat(quote.delivery_fee || 0).toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between text-sm">
                 <span className="text-neutral-600">Security Bond (refundable)</span>
-                <span className="font-medium">${quote.security_bond?.toFixed(2)}</span>
+                <span className="font-medium">${parseFloat(quote.security_bond || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between pt-2 border-t border-neutral-200">
                 <span className="font-bold text-neutral-900">Total</span>
-                <span className="font-bold text-xl text-[#E63946]">${quote.total?.toFixed(2)}</span>
+                <span className="font-bold text-xl text-[#E63946]">${parseFloat(quote.total || 0).toFixed(2)}</span>
               </div>
             </div>
 

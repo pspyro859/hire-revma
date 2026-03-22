@@ -218,7 +218,7 @@ export default function QuotesPage() {
                           <p className="text-neutral-500 text-sm">Total</p>
                           <p className="text-xl font-bold text-[#E63946] flex items-center">
                             <DollarSign className="w-5 h-5" />
-                            {quote.total?.toFixed(2)}
+                            {parseFloat(quote.total || 0).toFixed(2)}
                           </p>
                         </div>
                       </div>
