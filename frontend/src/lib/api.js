@@ -115,7 +115,7 @@ export const getInquiries = async (status = null) => {
 };
 
 export const updateInquiryStatus = async (inquiryId, status) => {
-  const response = await axios.put(`${API_URL}/inquiries/${inquiryId}/status?status=${status}`);
+  const response = await axios.put(`${API_URL}/inquiries/${inquiryId}/status?status=${status}`, {});
   return response.data;
 };
 
@@ -148,13 +148,13 @@ export const getUsers = async (role = null) => {
 };
 
 export const updateUserRole = async (userId, role) => {
-  const response = await axios.put(`${API_URL}/users/${userId}/role?role=${role}`);
+  const response = await axios.put(`${API_URL}/users/${userId}/role?role=${role}`, {});
   return response.data;
 };
 
 // ─── Seed Data ────────────────────────────────────────────────────────────────
 export const seedData = async () => {
-  const response = await axios.post(`${API_URL}/seed`);
+  const response = await axios.post(`${API_URL}/seed`, {});
   return response.data;
 };
 
@@ -176,7 +176,7 @@ export const getQuote = async (quoteId) => {
 };
 
 export const sendQuote = async (quoteId) => {
-  const response = await axios.post(`${API_URL}/quotes/${quoteId}/send`);
+  const response = await axios.post(`${API_URL}/quotes/${quoteId}/send`, {});
   return response.data;
 };
 
