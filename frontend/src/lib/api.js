@@ -92,10 +92,10 @@ export const uploadPhoto = async (agreementId, position, file) => {
 };
 
 export const signAgreement = async (agreementId, signatureType, signatureData) => {
-  const formData = new FormData();
-  formData.append("signature_type", signatureType);
-  formData.append("signature_data", signatureData);
-  const response = await axios.post(`${API_URL}/agreements/${agreementId}/sign`, formData);
+  const response = await axios.post(`${API_URL}/agreements/${agreementId}/sign`, {
+    signature_type: signatureType,
+    signature_data: signatureData,
+  });
   return response.data;
 };
 
@@ -198,11 +198,11 @@ export const uploadIdDocument = async (quoteId, token, docType, file) => {
 };
 
 export const signQuote = async (quoteId, token, signatureData, agreedToTerms) => {
-  const formData = new FormData();
-  formData.append("token", token);
-  formData.append("signature_data", signatureData);
-  formData.append("agreed_to_terms", agreedToTerms);
-  const response = await axios.post(`${API_URL}/customer/quote/${quoteId}/sign`, formData);
+  const response = await axios.post(`${API_URL}/customer/quote/${quoteId}/sign`, {
+    token,
+    signature_data: signatureData,
+    agreed_to_terms: agreedToTerms,
+  });
   return response.data;
 };
 
